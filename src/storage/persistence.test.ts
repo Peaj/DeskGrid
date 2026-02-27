@@ -9,9 +9,9 @@ import {
 describe('persistence schema', () => {
   it('serializes and parses layout and roster with schemaVersion', () => {
     const layout = {
-      schemaVersion: 1 as const,
+      schemaVersion: 2 as const,
       grid: { width: 10, height: 8, frontEdge: 'bottom' as const },
-      tables: [{ id: 't1', anchor: { x: 1, y: 1 }, orientation: 'horizontal' as const }],
+      seats: [{ id: 'seat:1,1', x: 1, y: 1 }],
     };
 
     const roster = {

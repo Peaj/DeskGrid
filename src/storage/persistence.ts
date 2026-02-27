@@ -1,4 +1,4 @@
-import { layoutFileSchema, rosterFileSchema } from '../domain/schema';
+import { parseLayoutFile, rosterFileSchema } from '../domain/schema';
 import type { LayoutFile, RosterFile } from '../domain/types';
 
 const LAYOUT_KEY = 'deskgrid.layout.current';
@@ -32,7 +32,7 @@ export function loadLayoutFromLocalStorage(): LayoutFile | null {
   if (!raw) {
     return null;
   }
-  return safeParse(raw, (input) => layoutFileSchema.parse(input));
+  return safeParse(raw, (input) => parseLayoutFile(input));
 }
 
 export function saveRosterToLocalStorage(roster: RosterFile): void {
@@ -62,7 +62,7 @@ export function clearLocalStorageProject(): void {
 }
 
 export function serializeLayout(layout: LayoutFile): string {
-  return JSON.stringify(layoutFileSchema.parse(layout), null, 2);
+  return JSON.stringify(parseLayoutFile(layout), null, 2);
 }
 
 export function serializeRoster(roster: RosterFile): string {
@@ -70,7 +70,7 @@ export function serializeRoster(roster: RosterFile): string {
 }
 
 export function parseLayoutFromJson(text: string): LayoutFile {
-  return layoutFileSchema.parse(JSON.parse(text));
+  return parseLayoutFile(JSON.parse(text));
 }
 
 export function parseRosterFromJson(text: string): RosterFile {

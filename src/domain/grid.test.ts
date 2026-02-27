@@ -1,29 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { buildSeatGraph, generateSeats, getTableCells } from './grid';
-import type { Table } from './types';
+import { buildSeatGraph, toggleSeatAt } from './grid';
 
 describe('grid utilities', () => {
-  it('generates seat cells from table orientation', () => {
-    const tables: Table[] = [
-      { id: 't1', anchor: { x: 2, y: 1 }, orientation: 'horizontal' },
-      { id: 't2', anchor: { x: 0, y: 0 }, orientation: 'vertical' },
-    ];
+  it('toggles single seats on/off by cell', () => {
+    const grid = { width: 5, height: 4, frontEdge: 'bottom' as const };
+    const first = toggleSeatAt([], 2, 1, grid);
+    expect(first).toHaveLength(1);
+    expect(first[0]).toMatchObject({ x: 2, y: 1 });
 
-    const seats = generateSeats(tables);
-    const coords = seats.map((seat) => `${seat.x},${seat.y}`).sort();
-    expect(coords).toEqual(['0,0', '0,1', '2,1', '3,1']);
-
-    expect(getTableCells(tables[1])).toEqual([
-      { x: 0, y: 0 },
-      { x: 0, y: 1 },
-    ]);
+    const second = toggleSeatAt(first, 2, 1, grid);
+    expect(second).toHaveLength(0);
   });
 
   it('classifies orthogonal and diagonal neighbors', () => {
     const seats = [
-      { id: 'a', x: 1, y: 1, tableId: 't1' },
-      { id: 'b', x: 2, y: 1, tableId: 't2' },
-      { id: 'c', x: 2, y: 2, tableId: 't3' },
+      { id: 'a', x: 1, y: 1 },
+      { id: 'b', x: 2, y: 1 },
+      { id: 'c', x: 2, y: 2 },
     ];
 
     const graph = buildSeatGraph(seats);

@@ -4,12 +4,11 @@ import { useDeskGridStore } from './useDeskGridStore';
 beforeEach(() => {
   useDeskGridStore.setState({
     grid: { width: 14, height: 10, frontEdge: 'bottom' },
-    tables: [],
+    seats: [],
     students: [],
     pairConstraints: [],
     positionConstraints: [],
     assignments: [],
-    selectedTableId: undefined,
     unassignedStudentIds: [],
     hardViolations: [],
     scoreBreakdown: { hardViolations: 0, softPenalty: 0, totalPenalty: 0 },
@@ -20,7 +19,7 @@ beforeEach(() => {
 describe('DeskGrid store', () => {
   it('random assignment leaves overflow students unassigned', () => {
     const store = useDeskGridStore.getState();
-    store.addTableAt(0, 0);
+    store.toggleSeat(0, 0);
 
     useDeskGridStore.setState({
       students: [
@@ -33,7 +32,7 @@ describe('DeskGrid store', () => {
     useDeskGridStore.getState().randomAssign();
 
     const next = useDeskGridStore.getState();
-    expect(next.assignments).toHaveLength(2);
-    expect(next.unassignedStudentIds).toHaveLength(1);
+    expect(next.assignments).toHaveLength(1);
+    expect(next.unassignedStudentIds).toHaveLength(2);
   });
 });

@@ -3,10 +3,10 @@ import { evaluateStateForDebug, generateInitialAssignment, solveSeating } from '
 import type { PairConstraint, PositionConstraint, Seat, Student } from '../domain/types';
 
 const seats: Seat[] = [
-  { id: 'a', x: 0, y: 0, tableId: 't1' },
-  { id: 'b', x: 1, y: 0, tableId: 't1' },
-  { id: 'c', x: 0, y: 1, tableId: 't2' },
-  { id: 'd', x: 1, y: 1, tableId: 't2' },
+  { id: 'a', x: 0, y: 0 },
+  { id: 'b', x: 1, y: 0 },
+  { id: 'c', x: 0, y: 1 },
+  { id: 'd', x: 1, y: 1 },
 ];
 
 const students: Student[] = [
@@ -60,7 +60,7 @@ describe('solver', () => {
 
     const result = solveSeating({
       grid: { width: 1, height: 1, frontEdge: 'bottom' },
-      seats: [{ id: 'only', x: 0, y: 0, tableId: 't1' }],
+      seats: [{ id: 'only', x: 0, y: 0 }],
       students: students.slice(0, 2),
       pairConstraints: constraints,
       positionConstraints: noPosition,

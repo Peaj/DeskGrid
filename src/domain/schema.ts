@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { LayoutFile, Seat } from './types';
 
 export const gridConfigSchema = z.object({
   width: z.number().int().min(4).max(60),
@@ -6,7 +7,13 @@ export const gridConfigSchema = z.object({
   frontEdge: z.literal('bottom'),
 });
 
-export const tableSchema = z.object({
+export const seatSchema = z.object({
+  id: z.string().min(1),
+  x: z.number().int().min(0),
+  y: z.number().int().min(0),
+});
+
+const legacyTableSchema = z.object({
   id: z.string().min(1),
   anchor: z.object({
     x: z.number().int().min(0),
@@ -40,11 +47,66 @@ export const positionConstraintSchema = z.object({
   hard: z.literal(false),
 });
 
-export const layoutFileSchema = z.object({
+const layoutFileV2Schema = z.object({
+  schemaVersion: z.literal(2),
+  grid: gridConfigSchema,
+  seats: z.array(seatSchema),
+});
+
+const layoutFileLegacySchema = z.object({
   schemaVersion: z.literal(1),
   grid: gridConfigSchema,
-  tables: z.array(tableSchema),
+  tables: z.array(legacyTableSchema),
 });
+
+export function makeSeatId(x: number, y: number): string {
+  return `seat:${x},${y}`;
+}
+
+function legacyTablesToSeats(
+  tables: Array<z.infer<typeof legacyTableSchema>>,
+): Seat[] {
+  const seatMap = new Map<string, Seat>();
+
+  for (const table of tables) {
+    const base = table.anchor;
+    const cells =
+      table.orientation === 'horizontal'
+        ? [
+            { x: base.x, y: base.y },
+            { x: base.x + 1, y: base.y },
+          ]
+        : [
+            { x: base.x, y: base.y },
+            { x: base.x, y: base.y + 1 },
+          ];
+
+    for (const cell of cells) {
+      const id = makeSeatId(cell.x, cell.y);
+      if (!seatMap.has(id)) {
+        seatMap.set(id, { id, x: cell.x, y: cell.y });
+      }
+    }
+  }
+
+  return [...seatMap.values()];
+}
+
+export function parseLayoutFile(input: unknown): LayoutFile {
+  const v2 = layoutFileV2Schema.safeParse(input);
+  if (v2.success) {
+    return v2.data;
+  }
+
+  const legacy = layoutFileLegacySchema.parse(input);
+  return {
+    schemaVersion: 2,
+    grid: legacy.grid,
+    seats: legacyTablesToSeats(legacy.tables),
+  };
+}
+
+export const layoutFileSchema = layoutFileV2Schema;
 
 export const rosterFileSchema = z.object({
   schemaVersion: z.literal(1),

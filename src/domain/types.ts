@@ -1,5 +1,4 @@
 export type FrontEdge = 'bottom';
-export type TableOrientation = 'horizontal' | 'vertical';
 
 export interface GridConfig {
   width: number;
@@ -12,17 +11,10 @@ export interface Cell {
   y: number;
 }
 
-export interface Table {
-  id: string;
-  anchor: Cell;
-  orientation: TableOrientation;
-}
-
 export interface Seat {
   id: string;
   x: number;
   y: number;
-  tableId: string;
 }
 
 export interface Student {
@@ -85,7 +77,7 @@ export interface SolveInput {
 export interface LayoutFile {
   schemaVersion: number;
   grid: GridConfig;
-  tables: Table[];
+  seats: Seat[];
 }
 
 export interface RosterFile {

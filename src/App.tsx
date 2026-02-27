@@ -1,4 +1,3 @@
-import { DndContext } from '@dnd-kit/core';
 import { ConstraintPanel } from './components/ConstraintPanel';
 import { GridCanvas } from './components/GridCanvas';
 import { RosterPanel } from './components/RosterPanel';
@@ -10,22 +9,17 @@ export default function App() {
   const appVersion = __APP_VERSION__;
   const {
     grid,
-    tables,
+    seats,
     students,
     pairConstraints,
     positionConstraints,
     assignments,
-    selectedTableId,
     unassignedStudentIds,
     hardViolations,
     scoreBreakdown,
     notices,
     resetProject,
-    addTableAt,
-    moveTable,
-    rotateTable,
-    deleteTable,
-    setSelectedTable,
+    toggleSeat,
     importStudentsFromCsvText,
     randomAssign,
     solve,
@@ -44,68 +38,61 @@ export default function App() {
   } = useDeskGridStore();
 
   return (
-    <DndContext>
-      <div className="app-shell">
-        <TopBar
-          appVersion={appVersion}
-          onNewProject={resetProject}
-          onSaveLocal={saveProjectLocal}
-          onLoadLocal={loadProjectLocal}
-          onClearLocal={clearProjectLocal}
-          onExportLayout={exportLayoutFile}
-          onExportRoster={exportRosterFile}
-          onImportLayout={importLayoutJson}
-          onImportRoster={importRosterJson}
+    <div className="app-shell">
+      <TopBar
+        appVersion={appVersion}
+        onNewProject={resetProject}
+        onSaveLocal={saveProjectLocal}
+        onLoadLocal={loadProjectLocal}
+        onClearLocal={clearProjectLocal}
+        onExportLayout={exportLayoutFile}
+        onExportRoster={exportRosterFile}
+        onImportLayout={importLayoutJson}
+        onImportRoster={importRosterJson}
+      />
+
+      <main className="workspace">
+        <RosterPanel
+          students={students}
+          unassignedStudentIds={unassignedStudentIds}
+          onImportCsvText={importStudentsFromCsvText}
         />
 
-        <main className="workspace">
-          <RosterPanel
-            students={students}
-            unassignedStudentIds={unassignedStudentIds}
-            onImportCsvText={importStudentsFromCsvText}
-          />
+        <GridCanvas
+          grid={grid}
+          seats={seats}
+          students={students}
+          assignments={assignments}
+          pairConstraints={pairConstraints}
+          positionConstraints={positionConstraints}
+          onToggleSeat={toggleSeat}
+          onAddPairConstraint={addPairConstraint}
+          onAddPositionConstraint={addPositionConstraint}
+        />
 
-          <GridCanvas
-            grid={grid}
-            tables={tables}
+        <aside className="right-column">
+          <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onSolve={solve} />
+          <ConstraintPanel
             students={students}
-            assignments={assignments}
             pairConstraints={pairConstraints}
             positionConstraints={positionConstraints}
-            selectedTableId={selectedTableId}
-            onAddTable={addTableAt}
-            onMoveTable={moveTable}
-            onRotateTable={rotateTable}
-            onDeleteTable={deleteTable}
-            onSelectTable={setSelectedTable}
-            onAddPairConstraint={addPairConstraint}
-            onAddPositionConstraint={addPositionConstraint}
+            hardViolations={hardViolations}
+            onRemovePairConstraint={removePairConstraint}
+            onRemovePositionConstraint={removePositionConstraint}
           />
+        </aside>
+      </main>
 
-          <aside className="right-column">
-            <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onSolve={solve} />
-            <ConstraintPanel
-              students={students}
-              pairConstraints={pairConstraints}
-              positionConstraints={positionConstraints}
-              hardViolations={hardViolations}
-              onRemovePairConstraint={removePairConstraint}
-              onRemovePositionConstraint={removePositionConstraint}
-            />
-          </aside>
-        </main>
-
-        <section className="notice-area" aria-live="polite">
-          {notices.map((notice, index) => (
-            <div key={`${notice}-${index}`} className="notice">
-              <span>{notice}</span>
-              <button onClick={() => removeNotice(index)} aria-label="Dismiss message">
-                x
-              </button>
-            </div>
-          ))}
-        </section>
-      </div>
-    </DndContext>
+      <section className="notice-area" aria-live="polite">
+        {notices.map((notice, index) => (
+          <div key={`${notice}-${index}`} className="notice">
+            <span>{notice}</span>
+            <button onClick={() => removeNotice(index)} aria-label="Dismiss message">
+              x
+            </button>
+          </div>
+        ))}
+      </section>
+    </div>
   );
 }

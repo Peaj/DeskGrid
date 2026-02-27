@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, DragEvent } from 'react';
-import { generateSeats } from '../domain/grid';
 import type {
   Assignment,
   GridConfig,
@@ -10,24 +9,20 @@ import type {
   PositionConstraintType,
   Seat,
   Student,
-  Table,
 } from '../domain/types';
 import { ConstraintOverlay } from './ConstraintOverlay';
 import { DEFAULT_CELL_SIZE, MAX_CELL_SIZE, MIN_CELL_SIZE } from './gridConstants';
 
+type GridLayer = 'layout' | 'student';
+
 interface GridCanvasProps {
   grid: GridConfig;
-  tables: Table[];
+  seats: Seat[];
   students: Student[];
   assignments: Assignment[];
   pairConstraints: PairConstraint[];
   positionConstraints: PositionConstraint[];
-  selectedTableId?: string;
-  onAddTable: (x: number, y: number) => void;
-  onMoveTable: (tableId: string, x: number, y: number) => void;
-  onRotateTable: (tableId: string) => void;
-  onDeleteTable: (tableId: string) => void;
-  onSelectTable: (tableId?: string) => void;
+  onToggleSeat: (x: number, y: number) => void;
   onAddPairConstraint: (studentAId: string, studentBId: string, type: PairConstraintType) => void;
   onAddPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
 }
@@ -37,12 +32,6 @@ interface PendingPair {
   targetId: string;
 }
 
-interface DragState {
-  tableId: string;
-  offsetX: number;
-  offsetY: number;
-}
-
 function readDraggedStudentId(event: DragEvent<HTMLElement>): string | null {
   const value = event.dataTransfer.getData('text/student-id');
   return value || null;
@@ -50,27 +39,21 @@ function readDraggedStudentId(event: DragEvent<HTMLElement>): string | null {
 
 export function GridCanvas({
   grid,
-  tables,
+  seats,
   students,
   assignments,
   pairConstraints,
   positionConstraints,
-  selectedTableId,
-  onAddTable,
-  onMoveTable,
-  onRotateTable,
-  onDeleteTable,
-  onSelectTable,
+  onToggleSeat,
   onAddPairConstraint,
   onAddPositionConstraint,
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
-  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
   const [cellSize, setCellSize] = useState(DEFAULT_CELL_SIZE);
   const panelRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const seats = useMemo(() => generateSeats(tables), [tables]);
   const studentById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
   const studentBySeatId = useMemo(() => new Map(assignments.map((item) => [item.seatId, item.studentId])), [assignments]);
 
@@ -120,52 +103,6 @@ export function GridCanvas({
     return () => window.removeEventListener('resize', measure);
   }, [grid.width]);
 
-  useEffect(() => {
-    if (!dragState) {
-      return;
-    }
-    const activeDrag = dragState;
-
-    function onPointerMove(event: PointerEvent): void {
-      const cell = toGridCell(event.clientX, event.clientY);
-      if (!cell) {
-        return;
-      }
-
-      onMoveTable(activeDrag.tableId, cell.x - activeDrag.offsetX, cell.y - activeDrag.offsetY);
-    }
-
-    function onPointerUp(): void {
-      setDragState(null);
-    }
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-    };
-  }, [dragState, onMoveTable]);
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      if (!selectedTableId) {
-        return;
-      }
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        event.preventDefault();
-        onDeleteTable(selectedTableId);
-      }
-      if (event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        onRotateTable(selectedTableId);
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onDeleteTable, onRotateTable, selectedTableId]);
-
   const canvasStyle: CSSProperties = {
     width: gridWidth,
     height: gridHeight,
@@ -174,11 +111,37 @@ export function GridCanvas({
 
   return (
     <section className="grid-panel" ref={panelRef}>
+      <div className="grid-layer-tabs" role="tablist" aria-label="Grid interaction layers">
+        <button
+          role="tab"
+          aria-selected={activeLayer === 'layout'}
+          className={`layer-tab ${activeLayer === 'layout' ? 'active' : ''}`}
+          onClick={() => setActiveLayer('layout')}
+        >
+          Layout Layer
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeLayer === 'student'}
+          className={`layer-tab ${activeLayer === 'student' ? 'active' : ''}`}
+          onClick={() => setActiveLayer('student')}
+        >
+          Student Layer
+        </button>
+      </div>
+
       <div className="grid-help">
-        <span>Click empty cell: add table</span>
-        <span>Drag table: move</span>
-        <span>Double-click table or press R: rotate</span>
-        <span>Delete table: Del</span>
+        {activeLayer === 'layout' ? (
+          <>
+            <span>Click any cell to toggle a seat on/off.</span>
+            <span>Use this layer to design the base seat layout.</span>
+          </>
+        ) : (
+          <>
+            <span>Base seats are locked in this layer.</span>
+            <span>Drag student chips to other students or front/back anchors to set constraints.</span>
+          </>
+        )}
       </div>
 
       {pendingPair && (
@@ -205,19 +168,22 @@ export function GridCanvas({
       )}
 
       <div
-        className="grid-canvas"
+        className={`grid-canvas ${activeLayer === 'student' ? 'student-layer-active' : 'layout-layer-active'}`}
         ref={canvasRef}
         style={canvasStyle}
         onClick={(event) => {
+          if (activeLayer !== 'layout') {
+            return;
+          }
           const target = event.target as HTMLElement;
-          if (target.closest('.table, .seat-spot, .drop-anchor, .constraint-popover')) {
+          if (target.closest('.constraint-popover, .drop-anchor')) {
             return;
           }
           const cell = toGridCell(event.clientX, event.clientY);
           if (!cell) {
             return;
           }
-          onAddTable(cell.x, cell.y);
+          onToggleSeat(cell.x, cell.y);
         }}
       >
         <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
@@ -226,101 +192,70 @@ export function GridCanvas({
           ))}
         </div>
 
-        <div
-          className="drop-anchor back-anchor"
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={(event) => {
-            event.preventDefault();
-            const studentId = readDraggedStudentId(event);
-            if (!studentId) {
-              return;
-            }
-            onAddPositionConstraint(studentId, 'prefer_back');
-          }}
-        >
-          Back
-        </div>
-
-        <div
-          className="drop-anchor front-anchor"
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={(event) => {
-            event.preventDefault();
-            const studentId = readDraggedStudentId(event);
-            if (!studentId) {
-              return;
-            }
-            onAddPositionConstraint(studentId, 'prefer_front');
-          }}
-        >
-          Front
-        </div>
-
-        <ConstraintOverlay
-          width={gridWidth}
-          height={gridHeight}
-          cellSize={cellSize}
-          seats={seats}
-          assignments={assignments}
-          pairConstraints={pairConstraints}
-          positionConstraints={positionConstraints}
-        />
-
-        {tables.map((table) => {
-          const width = table.orientation === 'horizontal' ? cellSize * 2 : cellSize;
-          const height = table.orientation === 'horizontal' ? cellSize : cellSize * 2;
-          const selected = selectedTableId === table.id;
-
-          return (
+        {activeLayer === 'student' && (
+          <>
             <div
-              key={table.id}
-              className={`table ${selected ? 'selected' : ''}`}
-              style={{
-                left: table.anchor.x * cellSize,
-                top: table.anchor.y * cellSize,
-                width,
-                height,
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelectTable(table.id);
-              }}
-              onDoubleClick={(event) => {
-                event.stopPropagation();
-                onRotateTable(table.id);
-              }}
-              onPointerDown={(event) => {
+              className="drop-anchor back-anchor"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
                 event.preventDefault();
-                const cell = toGridCell(event.clientX, event.clientY);
-                if (!cell) {
+                const studentId = readDraggedStudentId(event);
+                if (!studentId) {
                   return;
                 }
-                setDragState({
-                  tableId: table.id,
-                  offsetX: Math.max(0, cell.x - table.anchor.x),
-                  offsetY: Math.max(0, cell.y - table.anchor.y),
-                });
+                onAddPositionConstraint(studentId, 'prefer_back');
               }}
             >
-              <span className="table-label">{table.orientation === 'horizontal' ? '2x1' : '1x2'}</span>
+              Back
             </div>
-          );
-        })}
 
-        {seats.map((seat: Seat) => {
+            <div
+              className="drop-anchor front-anchor"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const studentId = readDraggedStudentId(event);
+                if (!studentId) {
+                  return;
+                }
+                onAddPositionConstraint(studentId, 'prefer_front');
+              }}
+            >
+              Front
+            </div>
+
+            <ConstraintOverlay
+              width={gridWidth}
+              height={gridHeight}
+              cellSize={cellSize}
+              seats={seats}
+              assignments={assignments}
+              pairConstraints={pairConstraints}
+              positionConstraints={positionConstraints}
+            />
+          </>
+        )}
+
+        {seats.map((seat) => {
           const studentId = studentBySeatId.get(seat.id);
           const student = studentId ? studentById.get(studentId) : undefined;
 
           return (
-            <div key={seat.id} className="seat-spot" style={{ left: seat.x * cellSize, top: seat.y * cellSize }}>
+            <div key={seat.id} className="seat-spot active-seat" style={{ left: seat.x * cellSize, top: seat.y * cellSize }}>
               {student ? (
                 <div
-                  className="student-chip"
-                  draggable
+                  className={`student-chip ${activeLayer === 'layout' ? 'readonly' : ''}`}
+                  draggable={activeLayer === 'student'}
                   onDragOver={(event) => {
+                    if (activeLayer !== 'student') {
+                      return;
+                    }
                     event.preventDefault();
                   }}
                   onDrop={(event) => {
+                    if (activeLayer !== 'student') {
+                      return;
+                    }
                     event.preventDefault();
                     const sourceId = readDraggedStudentId(event);
                     if (!sourceId || sourceId === student.id) {
@@ -329,16 +264,24 @@ export function GridCanvas({
                     setPendingPair({ sourceId, targetId: student.id });
                   }}
                   onDragStart={(event) => {
+                    if (activeLayer !== 'student') {
+                      event.preventDefault();
+                      return;
+                    }
                     event.dataTransfer.setData('text/student-id', student.id);
                     event.dataTransfer.effectAllowed = 'copy';
                   }}
-                  title="Drag to another student for pair rule. Drag to top/bottom anchors for back/front preference."
+                  title={
+                    activeLayer === 'student'
+                      ? 'Drag to another student for pair rule. Drag to top/bottom anchors for back/front preference.'
+                      : 'Seat occupied'
+                  }
                 >
                   <span className="drag-handle">::</span>
                   <span>{student.name}</span>
                 </div>
               ) : (
-                <span className="seat-empty">Empty</span>
+                <span className="seat-empty">Seat</span>
               )}
             </div>
           );

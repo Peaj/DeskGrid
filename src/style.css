@@ -186,6 +186,31 @@ ul {
   color: #32506a;
 }
 
+.grid-layer-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.2rem;
+  border: 1px solid #b6cade;
+  border-radius: 12px;
+  background: #eef4fb;
+  width: fit-content;
+}
+
+.layer-tab {
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #32506a;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.65rem;
+}
+
+.layer-tab.active {
+  background: #1f6f8b;
+  color: #fff;
+  border-color: #1f6f8b;
+}
+
 .grid-canvas {
   position: relative;
   border-radius: 18px;
@@ -197,6 +222,10 @@ ul {
   max-width: 100%;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.grid-canvas.layout-layer-active {
+  cursor: crosshair;
 }
 
 .grid-cells {
@@ -290,6 +319,12 @@ ul {
   pointer-events: none;
 }
 
+.active-seat {
+  border: 2px solid rgba(19, 92, 130, 0.85);
+  border-radius: 10px;
+  background: linear-gradient(165deg, rgba(76, 147, 186, 0.88), rgba(38, 109, 150, 0.82));
+}
+
 .seat-empty {
   display: inline-flex;
   width: 100%;
@@ -301,6 +336,10 @@ ul {
   border-radius: 10px;
   border: 1px dashed rgba(65, 96, 130, 0.3);
   user-select: none;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: 600;
 }
 
 .student-chip {
@@ -322,6 +361,10 @@ ul {
   pointer-events: auto;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.student-chip.readonly {
+  pointer-events: none;
 }
 
 .drag-handle {

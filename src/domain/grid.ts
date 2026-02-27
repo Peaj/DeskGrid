@@ -1,59 +1,47 @@
-import type { Assignment, Cell, GridConfig, Seat, Table } from './types';
+import type { Assignment, Cell, GridConfig, Seat } from './types';
 
-function tableCells(table: Table): Cell[] {
-  const { x, y } = table.anchor;
-  if (table.orientation === 'horizontal') {
-    return [
-      { x, y },
-      { x: x + 1, y },
-    ];
-  }
-  return [
-    { x, y },
-    { x, y: y + 1 },
-  ];
-}
-
-export function getTableCells(table: Table): Cell[] {
-  return tableCells(table);
+export function makeSeatId(x: number, y: number): string {
+  return `seat:${x},${y}`;
 }
 
 export function isCellInBounds(cell: Cell, grid: GridConfig): boolean {
   return cell.x >= 0 && cell.y >= 0 && cell.x < grid.width && cell.y < grid.height;
 }
 
-export function canPlaceTable(table: Table, tables: Table[], grid: GridConfig, ignoreTableId?: string): boolean {
-  const cells = tableCells(table);
-  if (!cells.every((cell) => isCellInBounds(cell, grid))) {
-    return false;
-  }
-
-  const occupied = new Set<string>();
-  for (const other of tables) {
-    if (other.id === ignoreTableId) {
-      continue;
-    }
-    for (const cell of tableCells(other)) {
-      occupied.add(`${cell.x},${cell.y}`);
-    }
-  }
-
-  return cells.every((cell) => !occupied.has(`${cell.x},${cell.y}`));
+export function hasSeatAt(seats: Seat[], x: number, y: number): boolean {
+  return seats.some((seat) => seat.x === x && seat.y === y);
 }
 
-export function generateSeats(tables: Table[]): Seat[] {
-  const seats: Seat[] = [];
-  for (const table of tables) {
-    for (const cell of tableCells(table)) {
-      seats.push({
-        id: `${table.id}:${cell.x},${cell.y}`,
-        x: cell.x,
-        y: cell.y,
-        tableId: table.id,
-      });
-    }
+export function toggleSeatAt(seats: Seat[], x: number, y: number, grid: GridConfig): Seat[] {
+  if (!isCellInBounds({ x, y }, grid)) {
+    return seats;
   }
-  return seats;
+
+  const existing = seats.find((seat) => seat.x === x && seat.y === y);
+  if (existing) {
+    return seats.filter((seat) => seat.id !== existing.id);
+  }
+
+  return [...seats, { id: makeSeatId(x, y), x, y }];
+}
+
+export function cleanupAssignments(assignments: Assignment[], seats: Seat[]): Assignment[] {
+  const seatSet = new Set(seats.map((seat) => seat.id));
+  const seenStudents = new Set<string>();
+  const output: Assignment[] = [];
+
+  for (const assignment of assignments) {
+    if (!seatSet.has(assignment.seatId)) {
+      continue;
+    }
+    if (seenStudents.has(assignment.studentId)) {
+      continue;
+    }
+    seenStudents.add(assignment.studentId);
+    output.push(assignment);
+  }
+
+  return output;
 }
 
 export function indexAssignments(assignments: Assignment[]): Map<string, string> {

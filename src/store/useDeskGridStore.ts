@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { parseStudentsCsv } from '../domain/csv';
-import { canPlaceTable, generateSeats } from '../domain/grid';
+import { cleanupAssignments, toggleSeatAt } from '../domain/grid';
 import { createId } from '../domain/id';
 import type {
   Assignment,
@@ -13,8 +13,8 @@ import type {
   PositionConstraintType,
   RosterFile,
   ScoreBreakdown,
+  Seat,
   Student,
-  Table,
 } from '../domain/types';
 import { solveSeating } from '../solver';
 import {
@@ -30,7 +30,7 @@ import {
   serializeRoster,
 } from '../storage/persistence';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const defaultGrid: GridConfig = {
   width: 14,
   height: 10,
@@ -43,33 +43,15 @@ const defaultScore: ScoreBreakdown = {
   totalPenalty: 0,
 };
 
-function cleanupAssignments(assignments: Assignment[], tables: Table[]): Assignment[] {
-  const seatSet = new Set(generateSeats(tables).map((seat) => seat.id));
-  const seenStudents = new Set<string>();
-  const output: Assignment[] = [];
-
-  for (const assignment of assignments) {
-    if (!seatSet.has(assignment.seatId)) {
-      continue;
-    }
-    if (seenStudents.has(assignment.studentId)) {
-      continue;
-    }
-    seenStudents.add(assignment.studentId);
-    output.push(assignment);
-  }
-  return output;
-}
-
 function withProjectPersistence(state: DeskGridState): void {
   const layout: LayoutFile = {
     schemaVersion: SCHEMA_VERSION,
     grid: state.grid,
-    tables: state.tables,
+    seats: state.seats,
   };
 
   const roster: RosterFile = {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: 1,
     students: state.students,
     pairConstraints: state.pairConstraints,
     positionConstraints: state.positionConstraints,
@@ -80,8 +62,7 @@ function withProjectPersistence(state: DeskGridState): void {
   saveRosterToLocalStorage(roster);
 }
 
-function randomizeAssignments(students: Student[], tables: Table[]): { assignments: Assignment[]; unassignedStudentIds: string[] } {
-  const seats = generateSeats(tables);
+function randomizeAssignments(students: Student[], seats: Seat[]): { assignments: Assignment[]; unassignedStudentIds: string[] } {
   const seatIds = seats.map((seat) => seat.id);
   const shuffledStudents = [...students];
 
@@ -113,23 +94,18 @@ function computeUnassigned(students: Student[], assignments: Assignment[]): stri
 
 interface DeskGridState {
   grid: GridConfig;
-  tables: Table[];
+  seats: Seat[];
   students: Student[];
   pairConstraints: PairConstraint[];
   positionConstraints: PositionConstraint[];
   assignments: Assignment[];
-  selectedTableId?: string;
   unassignedStudentIds: string[];
   hardViolations: HardViolation[];
   scoreBreakdown: ScoreBreakdown;
   notices: string[];
 
   resetProject: () => void;
-  addTableAt: (x: number, y: number) => void;
-  moveTable: (tableId: string, x: number, y: number) => void;
-  rotateTable: (tableId: string) => void;
-  deleteTable: (tableId: string) => void;
-  setSelectedTable: (tableId?: string) => void;
+  toggleSeat: (x: number, y: number) => void;
   importStudentsFromCsvText: (text: string) => void;
   randomAssign: () => void;
   solve: () => void;
@@ -149,7 +125,7 @@ interface DeskGridState {
 
 export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   grid: defaultGrid,
-  tables: [],
+  seats: [],
   students: [],
   pairConstraints: [],
   positionConstraints: [],
@@ -162,12 +138,11 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   resetProject: () => {
     set({
       grid: defaultGrid,
-      tables: [],
+      seats: [],
       students: [],
       pairConstraints: [],
       positionConstraints: [],
       assignments: [],
-      selectedTableId: undefined,
       unassignedStudentIds: [],
       hardViolations: [],
       scoreBreakdown: defaultScore,
@@ -176,98 +151,19 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     withProjectPersistence(get());
   },
 
-  addTableAt: (x, y) => {
+  toggleSeat: (x, y) => {
     const state = get();
-    const table: Table = {
-      id: createId('tbl'),
-      anchor: { x, y },
-      orientation: 'horizontal',
-    };
-
-    if (!canPlaceTable(table, state.tables, state.grid)) {
-      set({ notices: ['Cannot place table at that location.', ...state.notices].slice(0, 5) });
-      return;
-    }
-
-    const tables = [...state.tables, table];
-    set({
-      tables,
-      selectedTableId: table.id,
-      notices: [],
-    });
-    withProjectPersistence(get());
-  },
-
-  moveTable: (tableId, x, y) => {
-    const state = get();
-    const current = state.tables.find((table) => table.id === tableId);
-    if (!current) {
-      return;
-    }
-
-    const nextTable: Table = {
-      ...current,
-      anchor: { x, y },
-    };
-
-    if (!canPlaceTable(nextTable, state.tables, state.grid, tableId)) {
-      return;
-    }
-
-    const tables = state.tables.map((table) => (table.id === tableId ? nextTable : table));
-    const assignments = cleanupAssignments(state.assignments, tables);
+    const seats = toggleSeatAt(state.seats, x, y, state.grid);
+    const assignments = cleanupAssignments(state.assignments, seats);
 
     set({
-      tables,
-      assignments,
-      unassignedStudentIds: computeUnassigned(state.students, assignments),
-    });
-    withProjectPersistence(get());
-  },
-
-  rotateTable: (tableId) => {
-    const state = get();
-    const table = state.tables.find((entry) => entry.id === tableId);
-    if (!table) {
-      return;
-    }
-
-    const rotated: Table = {
-      ...table,
-      orientation: table.orientation === 'horizontal' ? 'vertical' : 'horizontal',
-    };
-
-    if (!canPlaceTable(rotated, state.tables, state.grid, tableId)) {
-      set({ notices: ['Cannot rotate here due to collision or bounds.', ...state.notices].slice(0, 5) });
-      return;
-    }
-
-    const tables = state.tables.map((entry) => (entry.id === tableId ? rotated : entry));
-    const assignments = cleanupAssignments(state.assignments, tables);
-    set({
-      tables,
+      seats,
       assignments,
       unassignedStudentIds: computeUnassigned(state.students, assignments),
       notices: [],
     });
     withProjectPersistence(get());
   },
-
-  deleteTable: (tableId) => {
-    const state = get();
-    const tables = state.tables.filter((table) => table.id !== tableId);
-    const assignments = cleanupAssignments(state.assignments, tables);
-
-    set({
-      tables,
-      assignments,
-      selectedTableId: state.selectedTableId === tableId ? undefined : state.selectedTableId,
-      unassignedStudentIds: computeUnassigned(state.students, assignments),
-    });
-    withProjectPersistence(get());
-  },
-
-  setSelectedTable: (tableId) => set({ selectedTableId: tableId }),
 
   importStudentsFromCsvText: (text) => {
     const state = get();
@@ -288,7 +184,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   randomAssign: () => {
     const state = get();
-    const random = randomizeAssignments(state.students, state.tables);
+    const random = randomizeAssignments(state.students, state.seats);
     set({
       assignments: random.assignments,
       unassignedStudentIds: random.unassignedStudentIds,
@@ -301,11 +197,10 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   solve: () => {
     const state = get();
-    const seats = generateSeats(state.tables);
 
     const result = solveSeating({
       grid: state.grid,
-      seats,
+      seats: state.seats,
       students: state.students,
       pairConstraints: state.pairConstraints,
       positionConstraints: state.positionConstraints,
@@ -405,16 +300,15 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       return;
     }
 
-    const assignments = cleanupAssignments(roster.assignments, layout.tables);
+    const assignments = cleanupAssignments(roster.assignments, layout.seats);
 
     set({
       grid: layout.grid,
-      tables: layout.tables,
+      seats: layout.seats,
       students: roster.students,
       pairConstraints: roster.pairConstraints,
       positionConstraints: roster.positionConstraints,
       assignments,
-      selectedTableId: undefined,
       unassignedStudentIds: computeUnassigned(roster.students, assignments),
       hardViolations: [],
       scoreBreakdown: defaultScore,
@@ -432,7 +326,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const payload: LayoutFile = {
       schemaVersion: SCHEMA_VERSION,
       grid: state.grid,
-      tables: state.tables,
+      seats: state.seats,
     };
     downloadTextFile('layout.json', serializeLayout(payload));
   },
@@ -440,7 +334,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   exportRosterFile: () => {
     const state = get();
     const payload: RosterFile = {
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: 1,
       students: state.students,
       pairConstraints: state.pairConstraints,
       positionConstraints: state.positionConstraints,
@@ -453,12 +347,11 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const state = get();
     try {
       const layout = parseLayoutFromJson(text);
-      const assignments = cleanupAssignments(state.assignments, layout.tables);
+      const assignments = cleanupAssignments(state.assignments, layout.seats);
       set({
         grid: layout.grid,
-        tables: layout.tables,
+        seats: layout.seats,
         assignments,
-        selectedTableId: undefined,
         unassignedStudentIds: computeUnassigned(state.students, assignments),
         notices: ['Imported layout.json'],
       });
@@ -473,7 +366,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const state = get();
     try {
       const roster = parseRosterFromJson(text);
-      const assignments = cleanupAssignments(roster.assignments, state.tables);
+      const assignments = cleanupAssignments(roster.assignments, state.seats);
       set({
         students: roster.students,
         pairConstraints: roster.pairConstraints,
