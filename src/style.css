@@ -62,6 +62,10 @@
     @apply px-2 py-1 text-xs;
   }
 
+  .icon-btn {
+    @apply h-7 w-7 p-0;
+  }
+
   .ui-icon {
     @apply h-4 w-4 shrink-0;
   }
@@ -236,6 +240,10 @@
 
   .scroll-list li:hover {
     @apply bg-sky-50;
+  }
+
+  .scroll-list.compact {
+    @apply max-h-40;
   }
 
   .solver-actions {
@@ -457,6 +465,62 @@
 
   .constraint-popover {
     @apply flex flex-wrap items-center gap-2 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm shadow-soft;
+  }
+
+  .constraint-rule-list {
+    @apply mb-2 flex max-h-52 flex-col gap-1.5 overflow-auto rounded-lg border border-slate-200 bg-slate-50/70 p-1.5;
+  }
+
+  .constraint-empty {
+    @apply m-0 rounded-md border border-dashed border-slate-300 bg-white/70 px-2 py-2 text-sm text-slate-500;
+  }
+
+  .constraint-rule-card {
+    @apply flex items-start gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 shadow-sm;
+  }
+
+  .constraint-rule-card.state-pass {
+    @apply border-emerald-200 bg-emerald-50/45;
+  }
+
+  .constraint-rule-card.state-fail {
+    @apply border-rose-200 bg-rose-50/45;
+  }
+
+  .constraint-rule-card.state-pending {
+    @apply border-slate-200 bg-white;
+  }
+
+  .constraint-status-icon {
+    @apply mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500;
+  }
+
+  .constraint-rule-card.state-pass .constraint-status-icon {
+    @apply border-emerald-300 text-emerald-600;
+  }
+
+  .constraint-rule-card.state-fail .constraint-status-icon {
+    @apply border-rose-300 text-rose-600;
+  }
+
+  .constraint-rule-body {
+    @apply min-w-0 flex-1;
+  }
+
+  .constraint-rule-line {
+    @apply flex items-center gap-1.5 text-sm text-slate-700;
+  }
+
+  .constraint-student {
+    @apply max-w-[140px] truncate font-medium;
+  }
+
+  .constraint-link-icon {
+    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-600;
+  }
+
+  .constraint-rule-hint {
+    @apply mt-1 text-xs text-rose-600;
   }
 
   .bench-panel {

@@ -1,9 +1,16 @@
 import type { IconBaseProps, IconType } from 'react-icons';
 import {
   MdAutoFixHigh,
+  MdCancel,
+  MdCheckCircle,
+  MdClose,
+  MdExpandLess,
+  MdExpandMore,
   MdDeleteOutline,
   MdDownload,
   MdLink,
+  MdSwapHoriz,
+  MdRemove,
   MdUploadFile,
   MdWarningAmber,
   MdCreateNewFolder,
@@ -32,3 +39,10 @@ export const SolveIcon = withDefaultClass(MdAutoFixHigh);
 export const PairRuleIcon = withDefaultClass(MdLink);
 export const PositionRuleIcon = withDefaultClass(MdSwapVert);
 export const ConflictIcon = withDefaultClass(MdWarningAmber);
+export const NextToIcon = withDefaultClass(MdSwapHoriz);
+export const NotNextToIcon = withDefaultClass(MdClose);
+export const FrontIcon = withDefaultClass(MdExpandMore);
+export const BackIcon = withDefaultClass(MdExpandLess);
+export const CheckIcon = withDefaultClass(MdCheckCircle);
+export const CrossIcon = withDefaultClass(MdCancel);
+export const MinusIcon = withDefaultClass(MdRemove);

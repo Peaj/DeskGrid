@@ -125,7 +125,7 @@ export default function App() {
 
           <main
             className={`relative z-0 mt-3 grid min-h-0 grid-cols-1 gap-3 ${
-              activeLayer === 'student' ? 'xl:grid-cols-[1fr_minmax(250px,320px)]' : ''
+              activeLayer === 'student' ? 'xl:grid-cols-[minmax(0,1fr)_minmax(360px,460px)]' : ''
             }`}
           >
             <div className="flex min-h-0 flex-col gap-3">
@@ -154,6 +154,9 @@ export default function App() {
               <aside className="flex min-h-0 flex-col gap-3">
                 <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onSolve={solve} />
                 <ConstraintPanel
+                  grid={grid}
+                  seats={seats}
+                  assignments={assignments}
                   students={students}
                   pairConstraints={pairConstraints}
                   positionConstraints={positionConstraints}
