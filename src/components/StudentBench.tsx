@@ -29,7 +29,6 @@ export function StudentBench({ students, assignments, unassignedStudentIds }: St
             const isUnassigned = unassignedSet.has(student.id);
             return (
               <div key={student.id} className={`student-bench-chip ${isUnassigned ? 'is-unassigned' : 'is-assigned'}`}>
-                <span className="drag-handle">::</span>
                 <span className="student-bench-name">{student.name}</span>
                 <span className="student-bench-state">{isAssigned ? 'Seated' : 'Bench'}</span>
               </div>

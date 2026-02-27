@@ -101,7 +101,7 @@ export default function App() {
           <button
             role="tab"
             aria-selected={activeLayer === 'layout'}
-            className={`layer-tab ${activeLayer === 'layout' ? 'is-active' : ''}`}
+            className={`layer-tab layer-tab-layout ${activeLayer === 'layout' ? 'is-active' : ''}`}
             onClick={() => setActiveLayer('layout')}
           >
             Layout Layer
@@ -109,14 +109,14 @@ export default function App() {
           <button
             role="tab"
             aria-selected={activeLayer === 'student'}
-            className={`layer-tab ${activeLayer === 'student' ? 'is-active' : ''}`}
+            className={`layer-tab layer-tab-student ${activeLayer === 'student' ? 'is-active' : ''}`}
             onClick={() => setActiveLayer('student')}
           >
             Student Layer
           </button>
         </div>
 
-        <div className="panel workspace-shell">
+        <div className={`panel workspace-shell ${activeLayer === 'layout' ? 'mode-layout' : 'mode-student'}`}>
           <Toolbar
             ariaLabel={activeLayer === 'layout' ? 'Layout toolbar' : 'Student toolbar'}
             actions={activeLayer === 'layout' ? layoutToolbarActions : studentToolbarActions}

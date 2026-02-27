@@ -289,8 +289,7 @@ export function GridCanvas({
                         : 'Seat occupied'
                     }
                   >
-                    <span className="drag-handle">::</span>
-                    <span>{student.name}</span>
+                    <span className="student-chip-name">{student.name}</span>
                   </div>
                 ) : (
                   <span className="seat-empty">Seat</span>
