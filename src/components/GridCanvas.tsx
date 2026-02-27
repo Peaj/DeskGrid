@@ -50,12 +50,15 @@ export function GridCanvas({
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
   const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
+  const [paintMode, setPaintMode] = useState<'add' | 'remove' | null>(null);
   const [cellSize, setCellSize] = useState(DEFAULT_CELL_SIZE);
   const panelRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const paintedCellsRef = useRef<Set<string>>(new Set());
 
   const studentById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
   const studentBySeatId = useMemo(() => new Map(assignments.map((item) => [item.seatId, item.studentId])), [assignments]);
+  const occupiedCells = useMemo(() => new Set(seats.map((seat) => `${seat.x},${seat.y}`)), [seats]);
 
   const gridWidth = grid.width * cellSize;
   const gridHeight = grid.height * cellSize;
@@ -109,6 +112,34 @@ export function GridCanvas({
     ['--cell-size' as string]: `${cellSize}px`,
   };
 
+  function paintSeatCell(cell: { x: number; y: number }, mode: 'add' | 'remove'): void {
+    const key = `${cell.x},${cell.y}`;
+    if (paintedCellsRef.current.has(key)) {
+      return;
+    }
+    paintedCellsRef.current.add(key);
+
+    const hasSeat = occupiedCells.has(key);
+    if (mode === 'add' && !hasSeat) {
+      onToggleSeat(cell.x, cell.y);
+      return;
+    }
+
+    if (mode === 'remove' && hasSeat) {
+      onToggleSeat(cell.x, cell.y);
+    }
+  }
+
+  useEffect(() => {
+    function stopPaintStroke(): void {
+      setPaintMode(null);
+      paintedCellsRef.current.clear();
+    }
+
+    window.addEventListener('pointerup', stopPaintStroke);
+    return () => window.removeEventListener('pointerup', stopPaintStroke);
+  }, []);
+
   return (
     <section className="grid-panel" ref={panelRef}>
       <div className="grid-layer-tabs" role="tablist" aria-label="Grid interaction layers">
@@ -133,7 +164,7 @@ export function GridCanvas({
       <div className="grid-help">
         {activeLayer === 'layout' ? (
           <>
-            <span>Click any cell to toggle a seat on/off.</span>
+            <span>Click or drag with mouse down to paint seats on/off.</span>
             <span>Use this layer to design the base seat layout.</span>
           </>
         ) : (
@@ -171,8 +202,11 @@ export function GridCanvas({
         className={`grid-canvas ${activeLayer === 'student' ? 'student-layer-active' : 'layout-layer-active'}`}
         ref={canvasRef}
         style={canvasStyle}
-        onClick={(event) => {
+        onPointerDown={(event) => {
           if (activeLayer !== 'layout') {
+            return;
+          }
+          if (event.button !== 0) {
             return;
           }
           const target = event.target as HTMLElement;
@@ -183,7 +217,29 @@ export function GridCanvas({
           if (!cell) {
             return;
           }
-          onToggleSeat(cell.x, cell.y);
+          const startMode: 'add' | 'remove' = occupiedCells.has(`${cell.x},${cell.y}`) ? 'remove' : 'add';
+          paintedCellsRef.current.clear();
+          paintSeatCell(cell, startMode);
+          setPaintMode(startMode);
+        }}
+        onPointerMove={(event) => {
+          if (activeLayer !== 'layout' || !paintMode) {
+            return;
+          }
+          if ((event.buttons & 1) !== 1) {
+            setPaintMode(null);
+            paintedCellsRef.current.clear();
+            return;
+          }
+          const cell = toGridCell(event.clientX, event.clientY);
+          if (!cell) {
+            return;
+          }
+          paintSeatCell(cell, paintMode);
+        }}
+        onPointerUp={() => {
+          setPaintMode(null);
+          paintedCellsRef.current.clear();
         }}
       >
         <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
