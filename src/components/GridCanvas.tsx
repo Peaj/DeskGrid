@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { DragEvent } from 'react';
+import type { CSSProperties, DragEvent } from 'react';
 import { generateSeats } from '../domain/grid';
 import type {
   Assignment,
@@ -13,7 +13,7 @@ import type {
   Table,
 } from '../domain/types';
 import { ConstraintOverlay } from './ConstraintOverlay';
-import { CELL_SIZE } from './gridConstants';
+import { DEFAULT_CELL_SIZE, MAX_CELL_SIZE, MIN_CELL_SIZE } from './gridConstants';
 
 interface GridCanvasProps {
   grid: GridConfig;
@@ -66,14 +66,16 @@ export function GridCanvas({
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [cellSize, setCellSize] = useState(DEFAULT_CELL_SIZE);
+  const panelRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const seats = useMemo(() => generateSeats(tables), [tables]);
   const studentById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
   const studentBySeatId = useMemo(() => new Map(assignments.map((item) => [item.seatId, item.studentId])), [assignments]);
 
-  const gridWidth = grid.width * CELL_SIZE;
-  const gridHeight = grid.height * CELL_SIZE;
+  const gridWidth = grid.width * cellSize;
+  const gridHeight = grid.height * cellSize;
 
   function toGridCell(clientX: number, clientY: number): { x: number; y: number } | null {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -81,8 +83,8 @@ export function GridCanvas({
       return null;
     }
 
-    const x = Math.floor((clientX - rect.left) / CELL_SIZE);
-    const y = Math.floor((clientY - rect.top) / CELL_SIZE);
+    const x = Math.floor((clientX - rect.left) / cellSize);
+    const y = Math.floor((clientY - rect.top) / cellSize);
 
     if (x < 0 || y < 0 || x >= grid.width || y >= grid.height) {
       return null;
@@ -90,6 +92,33 @@ export function GridCanvas({
 
     return { x, y };
   }
+
+  useEffect(() => {
+    const panelElement = panelRef.current;
+    if (!panelElement) {
+      return;
+    }
+
+    const measure = (): void => {
+      const availableWidth = Math.max(0, panelElement.clientWidth - 4);
+      const computed = Math.floor(availableWidth / grid.width);
+      const nextCellSize = Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, computed));
+      setCellSize((current) => (current === nextCellSize ? current : nextCellSize));
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => {
+        measure();
+      });
+      observer.observe(panelElement);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [grid.width]);
 
   useEffect(() => {
     if (!dragState) {
@@ -137,8 +166,14 @@ export function GridCanvas({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onDeleteTable, onRotateTable, selectedTableId]);
 
+  const canvasStyle: CSSProperties = {
+    width: gridWidth,
+    height: gridHeight,
+    ['--cell-size' as string]: `${cellSize}px`,
+  };
+
   return (
-    <section className="grid-panel">
+    <section className="grid-panel" ref={panelRef}>
       <div className="grid-help">
         <span>Click empty cell: add table</span>
         <span>Drag table: move</span>
@@ -172,7 +207,7 @@ export function GridCanvas({
       <div
         className="grid-canvas"
         ref={canvasRef}
-        style={{ width: gridWidth, height: gridHeight }}
+        style={canvasStyle}
         onClick={(event) => {
           const target = event.target as HTMLElement;
           if (target.closest('.table, .seat-spot, .drop-anchor, .constraint-popover')) {
@@ -185,7 +220,7 @@ export function GridCanvas({
           onAddTable(cell.x, cell.y);
         }}
       >
-        <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${CELL_SIZE}px)` }}>
+        <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
           {Array.from({ length: grid.width * grid.height }).map((_, index) => (
             <div key={index} className="grid-cell" />
           ))}
@@ -224,6 +259,7 @@ export function GridCanvas({
         <ConstraintOverlay
           width={gridWidth}
           height={gridHeight}
+          cellSize={cellSize}
           seats={seats}
           assignments={assignments}
           pairConstraints={pairConstraints}
@@ -231,8 +267,8 @@ export function GridCanvas({
         />
 
         {tables.map((table) => {
-          const width = table.orientation === 'horizontal' ? CELL_SIZE * 2 : CELL_SIZE;
-          const height = table.orientation === 'horizontal' ? CELL_SIZE : CELL_SIZE * 2;
+          const width = table.orientation === 'horizontal' ? cellSize * 2 : cellSize;
+          const height = table.orientation === 'horizontal' ? cellSize : cellSize * 2;
           const selected = selectedTableId === table.id;
 
           return (
@@ -240,8 +276,8 @@ export function GridCanvas({
               key={table.id}
               className={`table ${selected ? 'selected' : ''}`}
               style={{
-                left: table.anchor.x * CELL_SIZE,
-                top: table.anchor.y * CELL_SIZE,
+                left: table.anchor.x * cellSize,
+                top: table.anchor.y * cellSize,
                 width,
                 height,
               }}
@@ -276,11 +312,7 @@ export function GridCanvas({
           const student = studentId ? studentById.get(studentId) : undefined;
 
           return (
-            <div
-              key={seat.id}
-              className="seat-spot"
-              style={{ left: seat.x * CELL_SIZE, top: seat.y * CELL_SIZE }}
-            >
+            <div key={seat.id} className="seat-spot" style={{ left: seat.x * cellSize, top: seat.y * cellSize }}>
               {student ? (
                 <div
                   className="student-chip"

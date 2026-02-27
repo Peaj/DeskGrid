@@ -1,25 +1,26 @@
-import { CELL_SIZE } from './gridConstants';
 import type { Assignment, PairConstraint, PositionConstraint, Seat } from '../domain/types';
 
 interface ConstraintOverlayProps {
   width: number;
   height: number;
+  cellSize: number;
   seats: Seat[];
   assignments: Assignment[];
   pairConstraints: PairConstraint[];
   positionConstraints: PositionConstraint[];
 }
 
-function seatCenter(seat: Seat): { x: number; y: number } {
+function seatCenter(seat: Seat, cellSize: number): { x: number; y: number } {
   return {
-    x: seat.x * CELL_SIZE + CELL_SIZE / 2,
-    y: seat.y * CELL_SIZE + CELL_SIZE / 2,
+    x: seat.x * cellSize + cellSize / 2,
+    y: seat.y * cellSize + cellSize / 2,
   };
 }
 
 export function ConstraintOverlay({
   width,
   height,
+  cellSize,
   seats,
   assignments,
   pairConstraints,
@@ -44,8 +45,8 @@ export function ConstraintOverlay({
           return null;
         }
 
-        const from = seatCenter(seatA);
-        const to = seatCenter(seatB);
+        const from = seatCenter(seatA, cellSize);
+        const to = seatCenter(seatB, cellSize);
         const className = constraint.type === 'must_next_to' ? 'pair-next' : 'pair-not-next';
 
         return (
@@ -67,7 +68,7 @@ export function ConstraintOverlay({
           return null;
         }
 
-        const from = seatCenter(seat);
+        const from = seatCenter(seat, cellSize);
         const to = {
           x: width / 2,
           y: constraint.type === 'prefer_front' ? height - 8 : 8,

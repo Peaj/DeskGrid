@@ -85,7 +85,7 @@ ul {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(220px, 290px) 1fr minmax(260px, 330px);
+  grid-template-columns: minmax(200px, 250px) 1fr minmax(230px, 290px);
   gap: 0.8rem;
   min-height: 0;
 }
@@ -191,8 +191,8 @@ ul {
 }
 
 .grid-cell {
-  width: 56px;
-  height: 56px;
+  width: var(--cell-size, 64px);
+  height: var(--cell-size, 64px);
   border: 1px solid rgba(89, 121, 148, 0.24);
 }
 
@@ -268,8 +268,8 @@ ul {
 
 .seat-spot {
   position: absolute;
-  width: 56px;
-  height: 56px;
+  width: var(--cell-size, 64px);
+  height: var(--cell-size, 64px);
   padding: 3px;
   z-index: 4;
   pointer-events: none;
