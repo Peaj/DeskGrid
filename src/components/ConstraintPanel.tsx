@@ -33,7 +33,7 @@ export function ConstraintPanel({
               {studentNameById.get(constraint.studentAId) ?? 'Unknown'} {constraint.type === 'must_next_to' ? 'next to' : 'not next to'}{' '}
               {studentNameById.get(constraint.studentBId) ?? 'Unknown'}
             </span>
-            <button onClick={() => onRemovePairConstraint(constraint.id)}>Delete</button>
+            <button className="ui-btn" onClick={() => onRemovePairConstraint(constraint.id)}>Delete</button>
           </li>
         ))}
       </ul>
@@ -46,7 +46,7 @@ export function ConstraintPanel({
             <span>
               {studentNameById.get(constraint.studentId) ?? 'Unknown'} {constraint.type === 'prefer_front' ? 'prefer front' : 'prefer back'}
             </span>
-            <button onClick={() => onRemovePositionConstraint(constraint.id)}>Delete</button>
+            <button className="ui-btn" onClick={() => onRemovePositionConstraint(constraint.id)}>Delete</button>
           </li>
         ))}
       </ul>

@@ -111,6 +111,20 @@ export function GridCanvas({
     height: gridHeight,
     ['--cell-size' as string]: `${cellSize}px`,
   };
+  const shellStyle: CSSProperties = {
+    width: gridWidth,
+    maxWidth: '100%',
+  };
+  const layoutTabClass =
+    'relative -mb-px rounded-t-md border border-b-0 px-3.5 py-1.5 text-xs font-semibold transition-all ' +
+    (activeLayer === 'layout'
+      ? 'z-20 border-slate-300 bg-white text-slate-800'
+      : 'border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-200');
+  const studentTabClass =
+    'relative -mb-px rounded-t-md border border-b-0 px-3.5 py-1.5 text-xs font-semibold transition-all ' +
+    (activeLayer === 'student'
+      ? 'z-20 border-amber-300 bg-white text-slate-800'
+      : 'border-amber-200 bg-amber-100/80 text-amber-900 hover:bg-amber-100');
 
   function paintSeatCell(cell: { x: number; y: number }, mode: 'add' | 'remove'): void {
     const key = `${cell.x},${cell.y}`;
@@ -141,27 +155,175 @@ export function GridCanvas({
   }, []);
 
   return (
-    <section className="grid-panel" ref={panelRef}>
-      <div className="grid-layer-tabs" role="tablist" aria-label="Grid interaction layers">
-        <button
-          role="tab"
-          aria-selected={activeLayer === 'layout'}
-          className={`layer-tab ${activeLayer === 'layout' ? 'active' : ''}`}
-          onClick={() => setActiveLayer('layout')}
+    <section className="flex min-h-0 flex-col" ref={panelRef}>
+      <div className="mx-auto" style={shellStyle}>
+        <div className="inline-flex w-fit items-end gap-1" role="tablist" aria-label="Grid interaction layers">
+          <button
+            role="tab"
+            aria-selected={activeLayer === 'layout'}
+            className={layoutTabClass}
+            onClick={() => setActiveLayer('layout')}
+          >
+            Layout Layer
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeLayer === 'student'}
+            className={studentTabClass}
+            onClick={() => setActiveLayer('student')}
+          >
+            Student Layer
+          </button>
+        </div>
+
+        <div
+          className={`grid-canvas ${activeLayer === 'student' ? 'student-layer-active' : 'layout-layer-active'}`}
+          ref={canvasRef}
+          style={canvasStyle}
+          onPointerDown={(event) => {
+            if (activeLayer !== 'layout') {
+              return;
+            }
+            if (event.button !== 0) {
+              return;
+            }
+            const target = event.target as HTMLElement;
+            if (target.closest('.constraint-popover, .drop-anchor')) {
+              return;
+            }
+            const cell = toGridCell(event.clientX, event.clientY);
+            if (!cell) {
+              return;
+            }
+            const startMode: 'add' | 'remove' = occupiedCells.has(`${cell.x},${cell.y}`) ? 'remove' : 'add';
+            paintedCellsRef.current.clear();
+            paintSeatCell(cell, startMode);
+            setPaintMode(startMode);
+          }}
+          onPointerMove={(event) => {
+            if (activeLayer !== 'layout' || !paintMode) {
+              return;
+            }
+            if ((event.buttons & 1) !== 1) {
+              setPaintMode(null);
+              paintedCellsRef.current.clear();
+              return;
+            }
+            const cell = toGridCell(event.clientX, event.clientY);
+            if (!cell) {
+              return;
+            }
+            paintSeatCell(cell, paintMode);
+          }}
+          onPointerUp={() => {
+            setPaintMode(null);
+            paintedCellsRef.current.clear();
+          }}
         >
-          Layout Layer
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeLayer === 'student'}
-          className={`layer-tab ${activeLayer === 'student' ? 'active' : ''}`}
-          onClick={() => setActiveLayer('student')}
-        >
-          Student Layer
-        </button>
+          <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
+            {Array.from({ length: grid.width * grid.height }).map((_, index) => (
+              <div key={index} className="grid-cell" />
+            ))}
+          </div>
+
+          {activeLayer === 'student' && (
+            <>
+              <div
+                className="drop-anchor back-anchor"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const studentId = readDraggedStudentId(event);
+                  if (!studentId) {
+                    return;
+                  }
+                  onAddPositionConstraint(studentId, 'prefer_back');
+                }}
+              >
+                Back
+              </div>
+
+              <div
+                className="drop-anchor front-anchor"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const studentId = readDraggedStudentId(event);
+                  if (!studentId) {
+                    return;
+                  }
+                  onAddPositionConstraint(studentId, 'prefer_front');
+                }}
+              >
+                Front
+              </div>
+
+              <ConstraintOverlay
+                width={gridWidth}
+                height={gridHeight}
+                cellSize={cellSize}
+                seats={seats}
+                assignments={assignments}
+                pairConstraints={pairConstraints}
+                positionConstraints={positionConstraints}
+              />
+            </>
+          )}
+
+          {seats.map((seat) => {
+            const studentId = studentBySeatId.get(seat.id);
+            const student = studentId ? studentById.get(studentId) : undefined;
+
+            return (
+              <div key={seat.id} className="seat-spot active-seat" style={{ left: seat.x * cellSize, top: seat.y * cellSize }}>
+                {student ? (
+                  <div
+                    className={`student-chip ${activeLayer === 'layout' ? 'readonly' : ''}`}
+                    draggable={activeLayer === 'student'}
+                    onDragOver={(event) => {
+                      if (activeLayer !== 'student') {
+                        return;
+                      }
+                      event.preventDefault();
+                    }}
+                    onDrop={(event) => {
+                      if (activeLayer !== 'student') {
+                        return;
+                      }
+                      event.preventDefault();
+                      const sourceId = readDraggedStudentId(event);
+                      if (!sourceId || sourceId === student.id) {
+                        return;
+                      }
+                      setPendingPair({ sourceId, targetId: student.id });
+                    }}
+                    onDragStart={(event) => {
+                      if (activeLayer !== 'student') {
+                        event.preventDefault();
+                        return;
+                      }
+                      event.dataTransfer.setData('text/student-id', student.id);
+                      event.dataTransfer.effectAllowed = 'copy';
+                    }}
+                    title={
+                      activeLayer === 'student'
+                        ? 'Drag to another student for pair rule. Drag to top/bottom anchors for back/front preference.'
+                        : 'Seat occupied'
+                    }
+                  >
+                    <span className="drag-handle">::</span>
+                    <span>{student.name}</span>
+                  </div>
+                ) : (
+                  <span className="seat-empty">Seat</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="grid-help">
+      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
         {activeLayer === 'layout' ? (
           <>
             <span>Click or drag with mouse down to paint seats on/off.</span>
@@ -176,9 +338,10 @@ export function GridCanvas({
       </div>
 
       {pendingPair && (
-        <div className="constraint-popover">
+        <div className="constraint-popover mt-2">
           <span>Create pair rule</span>
           <button
+            className="ui-btn"
             onClick={() => {
               onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_next_to');
               setPendingPair(null);
@@ -187,6 +350,7 @@ export function GridCanvas({
             Must sit next to
           </button>
           <button
+            className="ui-btn"
             onClick={() => {
               onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_not_next_to');
               setPendingPair(null);
@@ -194,155 +358,11 @@ export function GridCanvas({
           >
             Must not sit next to
           </button>
-          <button onClick={() => setPendingPair(null)}>Cancel</button>
+          <button className="ui-btn" onClick={() => setPendingPair(null)}>
+            Cancel
+          </button>
         </div>
       )}
-
-      <div
-        className={`grid-canvas ${activeLayer === 'student' ? 'student-layer-active' : 'layout-layer-active'}`}
-        ref={canvasRef}
-        style={canvasStyle}
-        onPointerDown={(event) => {
-          if (activeLayer !== 'layout') {
-            return;
-          }
-          if (event.button !== 0) {
-            return;
-          }
-          const target = event.target as HTMLElement;
-          if (target.closest('.constraint-popover, .drop-anchor')) {
-            return;
-          }
-          const cell = toGridCell(event.clientX, event.clientY);
-          if (!cell) {
-            return;
-          }
-          const startMode: 'add' | 'remove' = occupiedCells.has(`${cell.x},${cell.y}`) ? 'remove' : 'add';
-          paintedCellsRef.current.clear();
-          paintSeatCell(cell, startMode);
-          setPaintMode(startMode);
-        }}
-        onPointerMove={(event) => {
-          if (activeLayer !== 'layout' || !paintMode) {
-            return;
-          }
-          if ((event.buttons & 1) !== 1) {
-            setPaintMode(null);
-            paintedCellsRef.current.clear();
-            return;
-          }
-          const cell = toGridCell(event.clientX, event.clientY);
-          if (!cell) {
-            return;
-          }
-          paintSeatCell(cell, paintMode);
-        }}
-        onPointerUp={() => {
-          setPaintMode(null);
-          paintedCellsRef.current.clear();
-        }}
-      >
-        <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
-          {Array.from({ length: grid.width * grid.height }).map((_, index) => (
-            <div key={index} className="grid-cell" />
-          ))}
-        </div>
-
-        {activeLayer === 'student' && (
-          <>
-            <div
-              className="drop-anchor back-anchor"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                const studentId = readDraggedStudentId(event);
-                if (!studentId) {
-                  return;
-                }
-                onAddPositionConstraint(studentId, 'prefer_back');
-              }}
-            >
-              Back
-            </div>
-
-            <div
-              className="drop-anchor front-anchor"
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                const studentId = readDraggedStudentId(event);
-                if (!studentId) {
-                  return;
-                }
-                onAddPositionConstraint(studentId, 'prefer_front');
-              }}
-            >
-              Front
-            </div>
-
-            <ConstraintOverlay
-              width={gridWidth}
-              height={gridHeight}
-              cellSize={cellSize}
-              seats={seats}
-              assignments={assignments}
-              pairConstraints={pairConstraints}
-              positionConstraints={positionConstraints}
-            />
-          </>
-        )}
-
-        {seats.map((seat) => {
-          const studentId = studentBySeatId.get(seat.id);
-          const student = studentId ? studentById.get(studentId) : undefined;
-
-          return (
-            <div key={seat.id} className="seat-spot active-seat" style={{ left: seat.x * cellSize, top: seat.y * cellSize }}>
-              {student ? (
-                <div
-                  className={`student-chip ${activeLayer === 'layout' ? 'readonly' : ''}`}
-                  draggable={activeLayer === 'student'}
-                  onDragOver={(event) => {
-                    if (activeLayer !== 'student') {
-                      return;
-                    }
-                    event.preventDefault();
-                  }}
-                  onDrop={(event) => {
-                    if (activeLayer !== 'student') {
-                      return;
-                    }
-                    event.preventDefault();
-                    const sourceId = readDraggedStudentId(event);
-                    if (!sourceId || sourceId === student.id) {
-                      return;
-                    }
-                    setPendingPair({ sourceId, targetId: student.id });
-                  }}
-                  onDragStart={(event) => {
-                    if (activeLayer !== 'student') {
-                      event.preventDefault();
-                      return;
-                    }
-                    event.dataTransfer.setData('text/student-id', student.id);
-                    event.dataTransfer.effectAllowed = 'copy';
-                  }}
-                  title={
-                    activeLayer === 'student'
-                      ? 'Drag to another student for pair rule. Drag to top/bottom anchors for back/front preference.'
-                      : 'Seat occupied'
-                  }
-                >
-                  <span className="drag-handle">::</span>
-                  <span>{student.name}</span>
-                </div>
-              ) : (
-                <span className="seat-empty">Seat</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
     </section>
   );
 }

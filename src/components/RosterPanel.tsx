@@ -19,7 +19,7 @@ export function RosterPanel({ students, unassignedStudentIds, onImportCsvText }:
     <section className="panel roster-panel">
       <div className="panel-header">
         <h2>Students</h2>
-        <button onClick={() => fileInputRef.current?.click()}>Import CSV</button>
+        <button className="ui-btn" onClick={() => fileInputRef.current?.click()}>Import CSV</button>
       </div>
 
       <p className="meta">Total: {students.length}</p>

@@ -11,8 +11,8 @@ export function SolveControls({ scoreBreakdown, onRandomAssign, onSolve }: Solve
     <section className="panel solve-panel">
       <h2>Solver</h2>
       <div className="solver-actions">
-        <button onClick={onRandomAssign}>Random Assign</button>
-        <button className="primary" onClick={onSolve}>
+        <button className="ui-btn" onClick={onRandomAssign}>Random Assign</button>
+        <button className="ui-btn ui-btn-primary" onClick={onSolve}>
           Solve / Update Plan
         </button>
       </div>
