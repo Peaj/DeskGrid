@@ -36,6 +36,7 @@ export default function App() {
     importStudentsFromCsvText,
     randomAssign,
     solve,
+    moveStudentToSeat,
     addPairConstraint,
     addPositionConstraint,
     removePairConstraint,
@@ -139,6 +140,7 @@ export default function App() {
                 onToggleSeat={toggleSeat}
                 onAddPairConstraint={addPairConstraint}
                 onAddPositionConstraint={addPositionConstraint}
+                onMoveStudentToSeat={moveStudentToSeat}
                 onShellWidthChange={setGridShellWidth}
               />
               {activeLayer === 'student' && (
