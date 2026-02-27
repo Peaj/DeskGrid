@@ -1,19 +1,9 @@
-import { useRef } from 'react';
-
 interface TopBarProps {
   appVersion: string;
   onNewProject: () => void;
   onSaveLocal: () => void;
   onLoadLocal: () => void;
   onClearLocal: () => void;
-  onExportLayout: () => void;
-  onExportRoster: () => void;
-  onImportLayout: (text: string) => void;
-  onImportRoster: (text: string) => void;
-}
-
-async function readTextFile(file: File): Promise<string> {
-  return file.text();
 }
 
 export function TopBar({
@@ -22,14 +12,7 @@ export function TopBar({
   onSaveLocal,
   onLoadLocal,
   onClearLocal,
-  onExportLayout,
-  onExportRoster,
-  onImportLayout,
-  onImportRoster,
 }: TopBarProps) {
-  const layoutInputRef = useRef<HTMLInputElement>(null);
-  const rosterInputRef = useRef<HTMLInputElement>(null);
-
   return (
     <header className="app-bar">
       <div className="flex flex-wrap items-center gap-2">
@@ -57,58 +40,8 @@ export function TopBar({
               </button>
             </div>
           </details>
-
-          <details className="app-menu">
-            <summary className="ui-btn">Import / Export</summary>
-            <div className="app-menu-panel">
-              <button className="app-menu-item" onClick={onExportLayout}>
-                Export layout.json
-              </button>
-              <button className="app-menu-item" onClick={onExportRoster}>
-                Export roster.json
-              </button>
-              <button className="app-menu-item" onClick={() => layoutInputRef.current?.click()}>
-                Import layout.json
-              </button>
-              <button className="app-menu-item" onClick={() => rosterInputRef.current?.click()}>
-                Import roster.json
-              </button>
-            </div>
-          </details>
         </div>
       </div>
-
-      <input
-        hidden
-        ref={layoutInputRef}
-        type="file"
-        accept="application/json"
-        onChange={async (event) => {
-          const input = event.currentTarget;
-          const file = input.files?.[0];
-          if (!file) {
-            return;
-          }
-          onImportLayout(await readTextFile(file));
-          input.value = '';
-        }}
-      />
-
-      <input
-        hidden
-        ref={rosterInputRef}
-        type="file"
-        accept="application/json"
-        onChange={async (event) => {
-          const input = event.currentTarget;
-          const file = input.files?.[0];
-          if (!file) {
-            return;
-          }
-          onImportRoster(await readTextFile(file));
-          input.value = '';
-        }}
-      />
     </header>
   );
 }

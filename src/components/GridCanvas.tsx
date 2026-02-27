@@ -13,9 +13,10 @@ import type {
 import { ConstraintOverlay } from './ConstraintOverlay';
 import { DEFAULT_CELL_SIZE, MAX_CELL_SIZE, MIN_CELL_SIZE } from './gridConstants';
 
-type GridLayer = 'layout' | 'student';
+export type GridLayer = 'layout' | 'student';
 
 interface GridCanvasProps {
+  activeLayer: GridLayer;
   grid: GridConfig;
   seats: Seat[];
   students: Student[];
@@ -25,6 +26,7 @@ interface GridCanvasProps {
   onToggleSeat: (x: number, y: number) => void;
   onAddPairConstraint: (studentAId: string, studentBId: string, type: PairConstraintType) => void;
   onAddPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
+  onShellWidthChange?: (width: number) => void;
 }
 
 interface PendingPair {
@@ -38,6 +40,7 @@ function readDraggedStudentId(event: DragEvent<HTMLElement>): string | null {
 }
 
 export function GridCanvas({
+  activeLayer,
   grid,
   seats,
   students,
@@ -47,9 +50,9 @@ export function GridCanvas({
   onToggleSeat,
   onAddPairConstraint,
   onAddPositionConstraint,
+  onShellWidthChange,
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
-  const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
   const [paintMode, setPaintMode] = useState<'add' | 'remove' | null>(null);
   const [cellSize, setCellSize] = useState(DEFAULT_CELL_SIZE);
   const panelRef = useRef<HTMLElement>(null);
@@ -115,16 +118,10 @@ export function GridCanvas({
     width: gridWidth,
     maxWidth: '100%',
   };
-  const layoutTabClass =
-    'relative -mb-px rounded-t-md border border-b-0 px-3.5 py-1.5 text-xs font-semibold transition-all ' +
-    (activeLayer === 'layout'
-      ? 'z-20 border-slate-300 bg-white text-slate-800'
-      : 'border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-200');
-  const studentTabClass =
-    'relative -mb-px rounded-t-md border border-b-0 px-3.5 py-1.5 text-xs font-semibold transition-all ' +
-    (activeLayer === 'student'
-      ? 'z-20 border-amber-300 bg-white text-slate-800'
-      : 'border-amber-200 bg-amber-100/80 text-amber-900 hover:bg-amber-100');
+
+  useEffect(() => {
+    onShellWidthChange?.(gridWidth);
+  }, [gridWidth, onShellWidthChange]);
 
   function paintSeatCell(cell: { x: number; y: number }, mode: 'add' | 'remove'): void {
     const key = `${cell.x},${cell.y}`;
@@ -156,26 +153,7 @@ export function GridCanvas({
 
   return (
     <section className="flex min-h-0 flex-col" ref={panelRef}>
-      <div className="mx-auto" style={shellStyle}>
-        <div className="inline-flex w-fit items-end gap-1" role="tablist" aria-label="Grid interaction layers">
-          <button
-            role="tab"
-            aria-selected={activeLayer === 'layout'}
-            className={layoutTabClass}
-            onClick={() => setActiveLayer('layout')}
-          >
-            Layout Layer
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeLayer === 'student'}
-            className={studentTabClass}
-            onClick={() => setActiveLayer('student')}
-          >
-            Student Layer
-          </button>
-        </div>
-
+      <div className="grid-shell" style={shellStyle}>
         <div
           className={`grid-canvas ${activeLayer === 'student' ? 'student-layer-active' : 'layout-layer-active'}`}
           ref={canvasRef}
@@ -321,20 +299,20 @@ export function GridCanvas({
             );
           })}
         </div>
-      </div>
 
-      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
-        {activeLayer === 'layout' ? (
-          <>
-            <span>Click or drag with mouse down to paint seats on/off.</span>
-            <span>Use this layer to design the base seat layout.</span>
-          </>
-        ) : (
-          <>
-            <span>Base seats are locked in this layer.</span>
-            <span>Drag student chips to other students or front/back anchors to set constraints.</span>
-          </>
-        )}
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+          {activeLayer === 'layout' ? (
+            <>
+              <span>Click or drag with mouse down to paint seats on/off.</span>
+              <span>Use this layer to design the base seat layout.</span>
+            </>
+          ) : (
+            <>
+              <span>Base seats are locked in this layer.</span>
+              <span>Drag student chips to other students or front/back anchors to set constraints.</span>
+            </>
+          )}
+        </div>
       </div>
 
       {pendingPair && (
