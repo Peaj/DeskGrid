@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 
 interface TopBarProps {
+  appVersion: string;
   onNewProject: () => void;
   onSaveLocal: () => void;
   onLoadLocal: () => void;
@@ -16,6 +17,7 @@ async function readTextFile(file: File): Promise<string> {
 }
 
 export function TopBar({
+  appVersion,
   onNewProject,
   onSaveLocal,
   onLoadLocal,
@@ -30,7 +32,10 @@ export function TopBar({
 
   return (
     <header className="topbar">
-      <h1>DeskGrid</h1>
+      <div className="brand-block">
+        <h1>DeskGrid</h1>
+        <span className="app-version">v{appVersion}</span>
+      </div>
       <div className="toolbar-actions">
         <button onClick={onNewProject}>New</button>
         <button onClick={onSaveLocal}>Save Local</button>

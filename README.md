@@ -6,7 +6,7 @@ DeskGrid is a frontend-only classroom seating planner built with React + TypeScr
 
 ## Deployment
 
-- Production site (GitHub Pages): https://peaj.github.io/DeskGrid/
+- Production site (GitHub Pages): https://peaj.de/DeskGrid/
 - Deployment method: GitHub Actions workflow (`.github/workflows/deploy-pages.yml`)
 - Trigger: push to `main` or manual workflow dispatch
 
@@ -34,4 +34,14 @@ npm run build
 
 ```bash
 npm run test
+```
+
+## Versioning
+
+DeskGrid uses semantic versioning (`MAJOR.MINOR.PATCH`).
+
+```bash
+npm run version:patch
+npm run version:minor
+npm run version:major
 ```

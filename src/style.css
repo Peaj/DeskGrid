@@ -74,7 +74,22 @@ ul {
   letter-spacing: 0.06em;
   font-size: 1.2rem;
   text-transform: uppercase;
+}
+
+.brand-block {
   margin-right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.app-version {
+  font-size: 0.78rem;
+  color: #46627b;
+  background: #eef4fb;
+  border: 1px solid #b9ccdd;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
 }
 
 .toolbar-actions {

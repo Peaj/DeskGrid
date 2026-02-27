@@ -7,6 +7,7 @@ import { TopBar } from './components/TopBar';
 import { useDeskGridStore } from './store/useDeskGridStore';
 
 export default function App() {
+  const appVersion = __APP_VERSION__;
   const {
     grid,
     tables,
@@ -46,6 +47,7 @@ export default function App() {
     <DndContext>
       <div className="app-shell">
         <TopBar
+          appVersion={appVersion}
           onNewProject={resetProject}
           onSaveLocal={saveProjectLocal}
           onLoadLocal={loadProjectLocal}
