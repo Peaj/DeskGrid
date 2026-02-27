@@ -5,6 +5,8 @@ import type { GridLayer } from './components/GridCanvas';
 import { SolveControls } from './components/SolveControls';
 import { StudentBench } from './components/StudentBench';
 import { TopBar } from './components/TopBar';
+import { Toolbar } from './components/Toolbar';
+import { ImportIcon, LoadIcon, SaveIcon } from './components/icons';
 import { useDeskGridStore } from './store/useDeskGridStore';
 
 async function readFileText(file: File): Promise<string> {
@@ -48,6 +50,42 @@ export default function App() {
     importRosterJson,
   } = useDeskGridStore();
 
+  const layoutToolbarActions = [
+    {
+      id: 'load-layout',
+      tooltip: 'Load layout.json',
+      icon: <LoadIcon />,
+      onClick: () => layoutInputRef.current?.click(),
+    },
+    {
+      id: 'save-layout',
+      tooltip: 'Save layout.json',
+      icon: <SaveIcon />,
+      onClick: exportLayoutFile,
+    },
+  ];
+
+  const studentToolbarActions = [
+    {
+      id: 'import-students',
+      tooltip: 'Import students.csv',
+      icon: <ImportIcon />,
+      onClick: () => csvInputRef.current?.click(),
+    },
+    {
+      id: 'load-roster',
+      tooltip: 'Load roster.json',
+      icon: <LoadIcon />,
+      onClick: () => rosterInputRef.current?.click(),
+    },
+    {
+      id: 'save-roster',
+      tooltip: 'Save roster.json',
+      icon: <SaveIcon />,
+      onClick: exportRosterFile,
+    },
+  ];
+
   return (
     <div className="relative isolate min-h-screen p-3 md:p-4">
       <TopBar
@@ -79,32 +117,10 @@ export default function App() {
         </div>
 
         <div className="panel workspace-shell">
-          <div className="layer-toolbar">
-            {activeLayer === 'layout' ? (
-              <>
-                <span className="layer-toolbar-title">Layout Tools</span>
-                <button className="ui-btn" onClick={() => layoutInputRef.current?.click()}>
-                  Import layout.json
-                </button>
-                <button className="ui-btn" onClick={exportLayoutFile}>
-                  Export layout.json
-                </button>
-              </>
-            ) : (
-              <>
-                <span className="layer-toolbar-title">Student Tools</span>
-                <button className="ui-btn" onClick={() => csvInputRef.current?.click()}>
-                  Import students.csv
-                </button>
-                <button className="ui-btn" onClick={() => rosterInputRef.current?.click()}>
-                  Import roster.json
-                </button>
-                <button className="ui-btn" onClick={exportRosterFile}>
-                  Export roster.json
-                </button>
-              </>
-            )}
-          </div>
+          <Toolbar
+            ariaLabel={activeLayer === 'layout' ? 'Layout toolbar' : 'Student toolbar'}
+            actions={activeLayer === 'layout' ? layoutToolbarActions : studentToolbarActions}
+          />
 
           <main
             className={`relative z-0 mt-3 grid min-h-0 grid-cols-1 gap-3 ${

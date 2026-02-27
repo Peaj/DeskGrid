@@ -1,3 +1,5 @@
+import { LoadIcon, NewProjectIcon, SaveIcon, TrashIcon } from './icons';
+
 interface TopBarProps {
   appVersion: string;
   onNewProject: () => void;
@@ -27,15 +29,19 @@ export function TopBar({
             <summary className="ui-btn">Project</summary>
             <div className="app-menu-panel">
               <button className="app-menu-item" onClick={onNewProject}>
+                <NewProjectIcon />
                 New Project
               </button>
               <button className="app-menu-item" onClick={onSaveLocal}>
+                <SaveIcon />
                 Save Local
               </button>
               <button className="app-menu-item" onClick={onLoadLocal}>
+                <LoadIcon />
                 Load Local
               </button>
               <button className="app-menu-item text-red-700" onClick={onClearLocal}>
+                <TrashIcon />
                 Clear Local
               </button>
             </div>

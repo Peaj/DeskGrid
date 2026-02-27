@@ -31,7 +31,7 @@
 
 @layer components {
   .ui-btn {
-    @apply inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-all;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-all;
   }
 
   .ui-btn:hover {
@@ -48,6 +48,22 @@
 
   .ui-btn-primary:hover {
     @apply border-sky-800 bg-sky-800;
+  }
+
+  .ui-btn-danger {
+    @apply border-red-200 text-red-700;
+  }
+
+  .ui-btn-danger:hover {
+    @apply border-red-300 bg-red-50;
+  }
+
+  .ui-btn-compact {
+    @apply px-2 py-1 text-xs;
+  }
+
+  .ui-icon {
+    @apply h-4 w-4 shrink-0;
   }
 
   .app-bar {
@@ -75,7 +91,7 @@
   }
 
   .app-menu-item {
-    @apply block w-full rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100;
+    @apply flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100;
   }
 
   .panel {
@@ -106,12 +122,44 @@
     @apply z-20 bg-white text-slate-800;
   }
 
-  .layer-toolbar {
-    @apply flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2;
+  .toolbar {
+    @apply flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100/80 p-1;
   }
 
-  .layer-toolbar-title {
-    @apply mr-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500;
+  .toolbar-icon-btn {
+    @apply relative h-8 w-8 rounded-md border border-transparent bg-transparent p-0 shadow-none;
+  }
+
+  .toolbar-icon-btn:hover {
+    @apply border-slate-300 bg-white;
+    transform: none;
+  }
+
+  .toolbar-icon-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 6px);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    border-radius: 0.45rem;
+    background: rgba(255, 255, 255, 0.98);
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.34rem 0.48rem;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    transition: opacity 120ms ease;
+    z-index: 50;
+  }
+
+  .toolbar-icon-btn:hover::after,
+  .toolbar-icon-btn:focus-visible::after {
+    opacity: 1;
   }
 
   .panel-header {
@@ -124,6 +172,10 @@
 
   .panel h3 {
     @apply text-base font-semibold text-slate-800;
+  }
+
+  .section-title-with-icon {
+    @apply inline-flex items-center gap-1.5;
   }
 
   .meta {

@@ -1,4 +1,5 @@
 import type { ScoreBreakdown } from '../domain/types';
+import { ShuffleIcon, SolveIcon } from './icons';
 
 interface SolveControlsProps {
   scoreBreakdown: ScoreBreakdown;
@@ -11,9 +12,13 @@ export function SolveControls({ scoreBreakdown, onRandomAssign, onSolve }: Solve
     <section className="panel solve-panel">
       <h2>Solver</h2>
       <div className="solver-actions">
-        <button className="ui-btn" onClick={onRandomAssign}>Random Assign</button>
+        <button className="ui-btn" onClick={onRandomAssign}>
+          <ShuffleIcon />
+          <span>Random Assign</span>
+        </button>
         <button className="ui-btn ui-btn-primary" onClick={onSolve}>
-          Solve / Update Plan
+          <SolveIcon />
+          <span>Solve / Update Plan</span>
         </button>
       </div>
 

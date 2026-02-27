@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { HardViolation, PairConstraint, PositionConstraint, Student } from '../domain/types';
+import { ConflictIcon, PairRuleIcon, PositionRuleIcon, TrashIcon } from './icons';
 
 interface ConstraintPanelProps {
   students: Student[];
@@ -24,7 +25,10 @@ export function ConstraintPanel({
     <section className="panel constraint-panel">
       <h2>Constraints</h2>
 
-      <h3>Pair Rules (Hard)</h3>
+      <h3 className="section-title-with-icon">
+        <PairRuleIcon />
+        <span>Pair Rules (Hard)</span>
+      </h3>
       <ul className="scroll-list">
         {pairConstraints.length === 0 && <li>No pair rules.</li>}
         {pairConstraints.map((constraint) => (
@@ -33,12 +37,18 @@ export function ConstraintPanel({
               {studentNameById.get(constraint.studentAId) ?? 'Unknown'} {constraint.type === 'must_next_to' ? 'next to' : 'not next to'}{' '}
               {studentNameById.get(constraint.studentBId) ?? 'Unknown'}
             </span>
-            <button className="ui-btn" onClick={() => onRemovePairConstraint(constraint.id)}>Delete</button>
+            <button className="ui-btn ui-btn-compact ui-btn-danger" onClick={() => onRemovePairConstraint(constraint.id)}>
+              <TrashIcon />
+              <span>Delete</span>
+            </button>
           </li>
         ))}
       </ul>
 
-      <h3>Front/Back Preferences (Soft)</h3>
+      <h3 className="section-title-with-icon">
+        <PositionRuleIcon />
+        <span>Front/Back Preferences (Soft)</span>
+      </h3>
       <ul className="scroll-list">
         {positionConstraints.length === 0 && <li>No front/back preferences.</li>}
         {positionConstraints.map((constraint) => (
@@ -46,12 +56,18 @@ export function ConstraintPanel({
             <span>
               {studentNameById.get(constraint.studentId) ?? 'Unknown'} {constraint.type === 'prefer_front' ? 'prefer front' : 'prefer back'}
             </span>
-            <button className="ui-btn" onClick={() => onRemovePositionConstraint(constraint.id)}>Delete</button>
+            <button className="ui-btn ui-btn-compact ui-btn-danger" onClick={() => onRemovePositionConstraint(constraint.id)}>
+              <TrashIcon />
+              <span>Delete</span>
+            </button>
           </li>
         ))}
       </ul>
 
-      <h3>Hard Conflicts</h3>
+      <h3 className="section-title-with-icon">
+        <ConflictIcon />
+        <span>Hard Conflicts</span>
+      </h3>
       <ul className="scroll-list violations">
         {hardViolations.length === 0 && <li>No hard conflicts.</li>}
         {hardViolations.map((violation) => (
