@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { buildSeatGraph } from '../domain/grid';
-import type { Assignment, GridConfig, HardViolation, PairConstraint, PositionConstraint, Seat, Student } from '../domain/types';
+import type { Assignment, GridConfig, PairConstraint, PositionConstraint, Seat, Student } from '../domain/types';
 import {
   BackIcon,
   CheckIcon,
-  ConflictIcon,
   CrossIcon,
   FrontIcon,
   MinusIcon,
@@ -22,7 +21,6 @@ interface ConstraintPanelProps {
   students: Student[];
   pairConstraints: PairConstraint[];
   positionConstraints: PositionConstraint[];
-  hardViolations: HardViolation[];
   onRemovePairConstraint: (constraintId: string) => void;
   onRemovePositionConstraint: (constraintId: string) => void;
 }
@@ -34,7 +32,6 @@ export function ConstraintPanel({
   students,
   pairConstraints,
   positionConstraints,
-  hardViolations,
   onRemovePairConstraint,
   onRemovePositionConstraint,
 }: ConstraintPanelProps) {
@@ -42,7 +39,6 @@ export function ConstraintPanel({
   const seatById = useMemo(() => new Map(seats.map((seat) => [seat.id, seat])), [seats]);
   const seatIdByStudentId = useMemo(() => new Map(assignments.map((item) => [item.studentId, item.seatId])), [assignments]);
   const seatGraph = useMemo(() => buildSeatGraph(seats), [seats]);
-  const hardViolationSet = useMemo(() => new Set(hardViolations.map((violation) => violation.constraintId)), [hardViolations]);
 
   const pairStates = useMemo(
     () =>
@@ -86,16 +82,16 @@ export function ConstraintPanel({
     [grid.height, positionConstraints, seatById, seatIdByStudentId],
   );
 
-  return (
-    <section className="panel constraint-panel">
-      <h2>Constraints</h2>
+  const totalRules = pairStates.length + positionStates.length;
 
+  return (
+    <section className="panel constraint-panel flex min-h-0 flex-col">
       <h3 className="section-title-with-icon">
         <PairRuleIcon />
-        <span>Pair Rules (Hard)</span>
+        <span>Rules</span>
       </h3>
       <div className="constraint-rule-list">
-        {pairStates.length === 0 && <p className="constraint-empty">No pair rules.</p>}
+        {totalRules === 0 && <p className="constraint-empty">No rules.</p>}
         {pairStates.map(({ constraint, state }) => (
           <article key={constraint.id} className={`constraint-rule-card state-${state}`}>
             <span className="constraint-status-icon" title={state === 'pass' ? 'Rule satisfied' : state === 'fail' ? 'Rule violated' : 'Pending'}>
@@ -103,13 +99,15 @@ export function ConstraintPanel({
             </span>
             <div className="constraint-rule-body">
               <div className="constraint-rule-line">
+                <span className="constraint-rule-type" title="Pair rule">
+                  <PairRuleIcon />
+                </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentAId) ?? 'Unknown'}</span>
                 <span className="constraint-link-icon" title={constraint.type === 'must_next_to' ? 'Must sit next to' : 'Must not sit next to'}>
                   {constraint.type === 'must_next_to' ? <NextToIcon /> : <NotNextToIcon />}
                 </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentBId) ?? 'Unknown'}</span>
               </div>
-              {hardViolationSet.has(constraint.id) && <p className="constraint-rule-hint">Unsatisfied in current layout.</p>}
             </div>
             <button
               className="ui-btn ui-btn-danger icon-btn"
@@ -121,14 +119,6 @@ export function ConstraintPanel({
             </button>
           </article>
         ))}
-      </div>
-
-      <h3 className="section-title-with-icon">
-        <PositionRuleIcon />
-        <span>Front/Back Preferences (Soft)</span>
-      </h3>
-      <div className="constraint-rule-list">
-        {positionStates.length === 0 && <p className="constraint-empty">No front/back preferences.</p>}
         {positionStates.map(({ constraint, state }) => (
           <article key={constraint.id} className={`constraint-rule-card state-${state}`}>
             <span className="constraint-status-icon" title={state === 'pass' ? 'Preference met' : state === 'fail' ? 'Preference not met' : 'Pending'}>
@@ -136,6 +126,9 @@ export function ConstraintPanel({
             </span>
             <div className="constraint-rule-body">
               <div className="constraint-rule-line">
+                <span className="constraint-rule-type" title="Position preference">
+                  <PositionRuleIcon />
+                </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentId) ?? 'Unknown'}</span>
                 <span className="constraint-link-icon" title={constraint.type === 'prefer_front' ? 'Prefer front' : 'Prefer back'}>
                   {constraint.type === 'prefer_front' ? <FrontIcon /> : <BackIcon />}
@@ -153,17 +146,6 @@ export function ConstraintPanel({
           </article>
         ))}
       </div>
-
-      <h3 className="section-title-with-icon">
-        <ConflictIcon />
-        <span>Hard Conflicts</span>
-      </h3>
-      <ul className="scroll-list violations compact">
-        {hardViolations.length === 0 && <li>No hard conflicts.</li>}
-        {hardViolations.map((violation) => (
-          <li key={`${violation.constraintId}-${violation.message}`}>{violation.message}</li>
-        ))}
-      </ul>
     </section>
   );
 }

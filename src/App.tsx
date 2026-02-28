@@ -28,7 +28,6 @@ export default function App() {
     positionConstraints,
     assignments,
     unassignedStudentIds,
-    hardViolations,
     scoreBreakdown,
     notices,
     resetProject,
@@ -151,7 +150,7 @@ export default function App() {
             </div>
 
             {activeLayer === 'student' && (
-              <aside className="flex min-h-0 flex-col gap-3">
+              <aside className="flex h-full min-h-0 flex-col gap-3">
                 <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onSolve={solve} />
                 <ConstraintPanel
                   grid={grid}
@@ -160,7 +159,6 @@ export default function App() {
                   students={students}
                   pairConstraints={pairConstraints}
                   positionConstraints={positionConstraints}
-                  hardViolations={hardViolations}
                   onRemovePairConstraint={removePairConstraint}
                   onRemovePositionConstraint={removePositionConstraint}
                 />
