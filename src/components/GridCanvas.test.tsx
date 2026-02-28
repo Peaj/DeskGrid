@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GridCanvas } from './GridCanvas';
 
@@ -8,6 +8,7 @@ describe('GridCanvas', () => {
 
     const { container } = render(
       <GridCanvas
+        activeLayer="layout"
         grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
         seats={[]}
         students={[]}
@@ -17,6 +18,7 @@ describe('GridCanvas', () => {
         onToggleSeat={onToggleSeat}
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
       />,
     );
 
@@ -33,6 +35,7 @@ describe('GridCanvas', () => {
 
     const { container } = render(
       <GridCanvas
+        activeLayer="student"
         grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
         seats={[]}
         students={[]}
@@ -42,10 +45,9 @@ describe('GridCanvas', () => {
         onToggleSeat={onToggleSeat}
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
       />,
     );
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Student Layer' }));
 
     const cell = container.querySelector('.grid-cell');
     expect(cell).not.toBeNull();
@@ -60,6 +62,7 @@ describe('GridCanvas', () => {
 
     const { container } = render(
       <GridCanvas
+        activeLayer="layout"
         grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
         seats={[]}
         students={[]}
@@ -69,6 +72,7 @@ describe('GridCanvas', () => {
         onToggleSeat={onToggleSeat}
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
       />,
     );
 

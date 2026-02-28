@@ -109,6 +109,7 @@ interface DeskGridState {
   importStudentsFromCsvText: (text: string) => void;
   randomAssign: () => void;
   solve: () => void;
+  moveStudentToSeat: (studentId: string, targetSeatId: string) => void;
   addPairConstraint: (studentAId: string, studentBId: string, type: PairConstraintType) => void;
   addPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
   removePairConstraint: (constraintId: string) => void;
@@ -216,6 +217,43 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         result.hardViolations.length > 0
           ? [`Solved with ${result.hardViolations.length} hard constraint conflict(s).`]
           : ['Solved seating plan.'],
+    });
+    withProjectPersistence(get());
+  },
+
+  moveStudentToSeat: (studentId, targetSeatId) => {
+    const state = get();
+    const seatSet = new Set(state.seats.map((seat) => seat.id));
+    if (!seatSet.has(targetSeatId)) {
+      return;
+    }
+
+    const sourceIndex = state.assignments.findIndex((assignment) => assignment.studentId === studentId);
+    if (sourceIndex < 0) {
+      return;
+    }
+
+    const sourceSeatId = state.assignments[sourceIndex].seatId;
+    if (sourceSeatId === targetSeatId) {
+      return;
+    }
+
+    const targetIndex = state.assignments.findIndex((assignment) => assignment.seatId === targetSeatId);
+    const assignments = [...state.assignments];
+
+    if (targetIndex >= 0) {
+      const targetStudentId = assignments[targetIndex].studentId;
+      assignments[sourceIndex] = { seatId: sourceSeatId, studentId: targetStudentId };
+      assignments[targetIndex] = { seatId: targetSeatId, studentId };
+    } else {
+      assignments[sourceIndex] = { seatId: targetSeatId, studentId };
+    }
+
+    const normalized = cleanupAssignments(assignments, state.seats);
+    set({
+      assignments: normalized,
+      unassignedStudentIds: computeUnassigned(state.students, normalized),
+      notices: [],
     });
     withProjectPersistence(get());
   },
