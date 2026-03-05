@@ -19,6 +19,7 @@ describe('GridCanvas', () => {
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
       />,
     );
 
@@ -46,6 +47,7 @@ describe('GridCanvas', () => {
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
       />,
     );
 
@@ -73,6 +75,7 @@ describe('GridCanvas', () => {
         onAddPairConstraint={vi.fn()}
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
       />,
     );
 

@@ -110,6 +110,7 @@ interface DeskGridState {
   randomAssign: () => void;
   solve: () => void;
   moveStudentToSeat: (studentId: string, targetSeatId: string) => void;
+  unassignStudent: (studentId: string) => void;
   addPairConstraint: (studentAId: string, studentBId: string, type: PairConstraintType) => void;
   addPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
   removePairConstraint: (constraintId: string) => void;
@@ -223,36 +224,69 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   moveStudentToSeat: (studentId, targetSeatId) => {
     const state = get();
+    const studentSet = new Set(state.students.map((student) => student.id));
+    if (!studentSet.has(studentId)) {
+      return;
+    }
+
     const seatSet = new Set(state.seats.map((seat) => seat.id));
     if (!seatSet.has(targetSeatId)) {
       return;
     }
 
-    const sourceIndex = state.assignments.findIndex((assignment) => assignment.studentId === studentId);
-    if (sourceIndex < 0) {
+    const sourceAssignment = state.assignments.find((assignment) => assignment.studentId === studentId);
+    const targetAssignment = state.assignments.find((assignment) => assignment.seatId === targetSeatId);
+    if (sourceAssignment && sourceAssignment.seatId === targetSeatId) {
       return;
     }
 
-    const sourceSeatId = state.assignments[sourceIndex].seatId;
-    if (sourceSeatId === targetSeatId) {
-      return;
-    }
-
-    const targetIndex = state.assignments.findIndex((assignment) => assignment.seatId === targetSeatId);
     const assignments = [...state.assignments];
 
-    if (targetIndex >= 0) {
-      const targetStudentId = assignments[targetIndex].studentId;
-      assignments[sourceIndex] = { seatId: sourceSeatId, studentId: targetStudentId };
-      assignments[targetIndex] = { seatId: targetSeatId, studentId };
+    if (sourceAssignment && targetAssignment) {
+      for (let i = 0; i < assignments.length; i += 1) {
+        if (assignments[i].studentId === studentId) {
+          assignments[i] = { seatId: targetSeatId, studentId };
+        } else if (assignments[i].seatId === targetSeatId) {
+          assignments[i] = { seatId: sourceAssignment.seatId, studentId: targetAssignment.studentId };
+        }
+      }
+    } else if (sourceAssignment && !targetAssignment) {
+      for (let i = 0; i < assignments.length; i += 1) {
+        if (assignments[i].studentId === studentId) {
+          assignments[i] = { seatId: targetSeatId, studentId };
+          break;
+        }
+      }
+    } else if (!sourceAssignment && targetAssignment) {
+      for (let i = 0; i < assignments.length; i += 1) {
+        if (assignments[i].seatId === targetSeatId) {
+          assignments[i] = { seatId: targetSeatId, studentId };
+          break;
+        }
+      }
     } else {
-      assignments[sourceIndex] = { seatId: targetSeatId, studentId };
+      assignments.push({ seatId: targetSeatId, studentId });
     }
 
     const normalized = cleanupAssignments(assignments, state.seats);
     set({
       assignments: normalized,
       unassignedStudentIds: computeUnassigned(state.students, normalized),
+      notices: [],
+    });
+    withProjectPersistence(get());
+  },
+
+  unassignStudent: (studentId) => {
+    const state = get();
+    const assignments = state.assignments.filter((assignment) => assignment.studentId !== studentId);
+    if (assignments.length === state.assignments.length) {
+      return;
+    }
+
+    set({
+      assignments,
+      unassignedStudentIds: computeUnassigned(state.students, assignments),
       notices: [],
     });
     withProjectPersistence(get());

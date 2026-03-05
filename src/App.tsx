@@ -36,6 +36,7 @@ export default function App() {
     randomAssign,
     solve,
     moveStudentToSeat,
+    unassignStudent,
     addPairConstraint,
     addPositionConstraint,
     removePairConstraint,
@@ -140,11 +141,16 @@ export default function App() {
                 onAddPairConstraint={addPairConstraint}
                 onAddPositionConstraint={addPositionConstraint}
                 onMoveStudentToSeat={moveStudentToSeat}
+                onUnassignStudent={unassignStudent}
                 onShellWidthChange={setGridShellWidth}
               />
               {activeLayer === 'student' && (
                 <div className="grid-shell" style={{ width: gridShellWidth || undefined, maxWidth: '100%' }}>
-                  <StudentBench students={students} assignments={assignments} unassignedStudentIds={unassignedStudentIds} />
+                  <StudentBench
+                    students={students}
+                    unassignedStudentIds={unassignedStudentIds}
+                    onImportCsvText={importStudentsFromCsvText}
+                  />
                 </div>
               )}
             </div>

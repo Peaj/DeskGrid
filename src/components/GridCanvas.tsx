@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CSSProperties } from 'react';
 import type {
   Assignment,
@@ -27,6 +28,7 @@ interface GridCanvasProps {
   onAddPairConstraint: (studentAId: string, studentBId: string, type: PairConstraintType) => void;
   onAddPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
   onMoveStudentToSeat: (studentId: string, targetSeatId: string) => void;
+  onUnassignStudent: (studentId: string) => void;
   onShellWidthChange?: (width: number) => void;
 }
 
@@ -37,16 +39,30 @@ interface PendingPair {
 
 interface ActiveStudentDrag {
   studentId: string;
-  sourceSeatId: string;
+  sourceSeatId: string | null;
   startClientX: number;
   startClientY: number;
   currentClientX: number;
   currentClientY: number;
+  pointerOffsetX: number;
+  pointerOffsetY: number;
+  tokenWidth: number;
+  tokenHeight: number;
 }
 
 interface DragHoverTarget {
   seatId: string | null;
   studentId: string | null;
+}
+
+interface BenchDragStartEventDetail {
+  studentId: string;
+  startClientX: number;
+  startClientY: number;
+  pointerOffsetX: number;
+  pointerOffsetY: number;
+  tokenWidth: number;
+  tokenHeight: number;
 }
 
 export function GridCanvas({
@@ -61,6 +77,7 @@ export function GridCanvas({
   onAddPairConstraint,
   onAddPositionConstraint,
   onMoveStudentToSeat,
+  onUnassignStudent,
   onShellWidthChange,
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
@@ -74,6 +91,7 @@ export function GridCanvas({
 
   const studentById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
   const studentBySeatId = useMemo(() => new Map(assignments.map((item) => [item.seatId, item.studentId])), [assignments]);
+  const seatByStudentId = useMemo(() => new Map(assignments.map((item) => [item.studentId, item.seatId])), [assignments]);
   const seatByCoord = useMemo(() => new Map(seats.map((seat) => [`${seat.x},${seat.y}`, seat])), [seats]);
   const occupiedCells = useMemo(() => new Set(seats.map((seat) => `${seat.x},${seat.y}`)), [seats]);
 
@@ -133,6 +151,7 @@ export function GridCanvas({
     maxWidth: '100%',
   };
   const isDraggingStudent = activeDrag !== null;
+  const draggedStudent = activeDrag ? studentById.get(activeDrag.studentId) : undefined;
 
   useEffect(() => {
     onShellWidthChange?.(gridWidth);
@@ -217,7 +236,20 @@ export function GridCanvas({
         const targetStudentChip = dropTarget?.closest<HTMLElement>('.student-chip[data-student-id]');
         const targetStudentId = targetStudentChip?.dataset.studentId;
         if (targetStudentId && targetStudentId !== current.studentId) {
+          if (current.sourceSeatId === null) {
+            const targetSeatId = seatByStudentId.get(targetStudentId);
+            if (targetSeatId) {
+              onMoveStudentToSeat(current.studentId, targetSeatId);
+            }
+            return null;
+          }
           setPendingPair({ sourceId: current.studentId, targetId: targetStudentId });
+          return null;
+        }
+
+        const benchDropZone = dropTarget?.closest('.student-bench-dropzone');
+        if (benchDropZone) {
+          onUnassignStudent(current.studentId);
           return null;
         }
 
@@ -234,6 +266,7 @@ export function GridCanvas({
         onMoveStudentToSeat(current.studentId, targetSeat.id);
         return null;
       });
+      window.dispatchEvent(new CustomEvent('deskgrid-stop-student-drag'));
     };
 
     window.addEventListener('pointermove', onPointerMove);
@@ -242,8 +275,34 @@ export function GridCanvas({
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       setDragHover({ seatId: null, studentId: null });
+      window.dispatchEvent(new CustomEvent('deskgrid-stop-student-drag'));
     };
-  }, [isDraggingStudent, onAddPositionConstraint, onMoveStudentToSeat, seatByCoord]);
+  }, [isDraggingStudent, onAddPositionConstraint, onMoveStudentToSeat, onUnassignStudent, seatByCoord, seatByStudentId]);
+
+  useEffect(() => {
+    const onBenchDragStart = (event: Event): void => {
+      const detail = (event as CustomEvent<BenchDragStartEventDetail>).detail;
+      if (!detail) {
+        return;
+      }
+      setPendingPair(null);
+      setActiveDrag({
+        studentId: detail.studentId,
+        sourceSeatId: null,
+        startClientX: detail.startClientX,
+        startClientY: detail.startClientY,
+        currentClientX: detail.startClientX,
+        currentClientY: detail.startClientY,
+        pointerOffsetX: detail.pointerOffsetX,
+        pointerOffsetY: detail.pointerOffsetY,
+        tokenWidth: detail.tokenWidth,
+        tokenHeight: detail.tokenHeight,
+      });
+    };
+
+    window.addEventListener('deskgrid-start-student-drag', onBenchDragStart as EventListener);
+    return () => window.removeEventListener('deskgrid-start-student-drag', onBenchDragStart as EventListener);
+  }, []);
 
   return (
     <section className="flex min-h-0 flex-col" ref={panelRef}>
@@ -334,7 +393,7 @@ export function GridCanvas({
                 {student ? (
                   <div
                     className={`student-chip ${activeLayer === 'layout' ? 'readonly' : ''} ${
-                      activeDrag?.studentId === student.id ? 'is-dragging' : ''
+                      activeDrag?.studentId === student.id ? 'is-drag-origin' : ''
                     } ${
                       isDraggingStudent && student.id !== activeDrag?.studentId ? 'drop-student-candidate' : ''
                     } ${isDraggingStudent && dragHover.studentId === student.id ? 'drop-student-hover' : ''}`}
@@ -348,6 +407,7 @@ export function GridCanvas({
                       }
                       event.preventDefault();
                       setPendingPair(null);
+                      const tokenRect = event.currentTarget.getBoundingClientRect();
                       setActiveDrag({
                         studentId: student.id,
                         sourceSeatId: seat.id,
@@ -355,24 +415,16 @@ export function GridCanvas({
                         startClientY: event.clientY,
                         currentClientX: event.clientX,
                         currentClientY: event.clientY,
+                        pointerOffsetX: event.clientX - tokenRect.left,
+                        pointerOffsetY: event.clientY - tokenRect.top,
+                        tokenWidth: tokenRect.width,
+                        tokenHeight: tokenRect.height,
                       });
                     }}
                     title={
                       activeLayer === 'student'
                         ? 'Drag to another student for pair rule. Drag to top/bottom anchors for back/front preference.'
                         : 'Seat occupied'
-                    }
-                    style={
-                      activeDrag?.studentId === student.id
-                        ? {
-                            position: 'relative',
-                            transform: `translate(${activeDrag.currentClientX - activeDrag.startClientX}px, ${
-                              activeDrag.currentClientY - activeDrag.startClientY
-                            }px)`,
-                            zIndex: 60,
-                            pointerEvents: 'none',
-                          }
-                        : undefined
                     }
                   >
                     <span className="student-chip-name">{student.name}</span>
@@ -394,7 +446,7 @@ export function GridCanvas({
           ) : (
             <>
               <span>Base seats are locked in this layer.</span>
-              <span>Drag students to another student (pair rule), seat (move/swap), or front/back anchors.</span>
+              <span>Drag students between bench and seats, to another student (pair rule), or to front/back anchors.</span>
             </>
           )}
         </div>
@@ -426,6 +478,22 @@ export function GridCanvas({
           </button>
         </div>
       )}
+
+      {activeDrag && draggedStudent &&
+        createPortal(
+          <div
+            className="student-chip drag-ghost"
+            style={{
+              left: activeDrag.currentClientX - activeDrag.pointerOffsetX,
+              top: activeDrag.currentClientY - activeDrag.pointerOffsetY,
+              width: activeDrag.tokenWidth,
+              height: activeDrag.tokenHeight,
+            }}
+          >
+            <span className="student-chip-name">{draggedStudent.name}</span>
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }

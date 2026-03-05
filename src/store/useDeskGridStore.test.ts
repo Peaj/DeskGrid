@@ -60,4 +60,49 @@ describe('DeskGrid store', () => {
     expect(bySeat.get('seat:0,0')).toBe('s2');
     expect(bySeat.get('seat:1,0')).toBe('s1');
   });
+
+  it('places unassigned student onto occupied seat and moves displaced student to bench', () => {
+    useDeskGridStore.setState({
+      seats: [
+        { id: 'seat:0,0', x: 0, y: 0 },
+        { id: 'seat:1,0', x: 1, y: 0 },
+      ],
+      students: [
+        { id: 's1', name: 'A' },
+        { id: 's2', name: 'B' },
+        { id: 's3', name: 'C' },
+      ],
+      assignments: [
+        { seatId: 'seat:0,0', studentId: 's1' },
+        { seatId: 'seat:1,0', studentId: 's2' },
+      ],
+      unassignedStudentIds: ['s3'],
+    });
+
+    useDeskGridStore.getState().moveStudentToSeat('s3', 'seat:1,0');
+
+    const next = useDeskGridStore.getState();
+    const bySeat = new Map(next.assignments.map((entry) => [entry.seatId, entry.studentId]));
+
+    expect(bySeat.get('seat:0,0')).toBe('s1');
+    expect(bySeat.get('seat:1,0')).toBe('s3');
+    expect(next.unassignedStudentIds).toContain('s2');
+  });
+
+  it('moves seated student back to bench', () => {
+    useDeskGridStore.setState({
+      seats: [{ id: 'seat:0,0', x: 0, y: 0 }],
+      students: [
+        { id: 's1', name: 'A' },
+        { id: 's2', name: 'B' },
+      ],
+      assignments: [{ seatId: 'seat:0,0', studentId: 's1' }],
+    });
+
+    useDeskGridStore.getState().unassignStudent('s1');
+
+    const next = useDeskGridStore.getState();
+    expect(next.assignments).toHaveLength(0);
+    expect(next.unassignedStudentIds).toContain('s1');
+  });
 });
