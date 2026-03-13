@@ -475,21 +475,25 @@ export function GridCanvas({
               isDraggingStudent && dragHover.studentId === null && dragHover.seatId === seat.id && !isSourceSeat;
 
             return (
-              <div
-                key={seat.id}
-                className={`seat-spot active-seat ${isSourceSeat ? 'drag-source-seat' : ''} ${
-                  isDraggingStudent ? 'drop-seat-candidate' : ''
-                } ${isSeatDropTarget ? 'drop-seat-hover' : ''}`}
-                style={{ left: seat.x * cellSize, top: seat.y * cellSize }}
-              >
+              <div key={seat.id}>
+                <div
+                  className={`seat-spot active-seat ${isSourceSeat ? 'drag-source-seat' : ''} ${
+                    isDraggingStudent ? 'drop-seat-candidate' : ''
+                  } ${isSeatDropTarget ? 'drop-seat-hover' : ''}`}
+                  style={{ left: seat.x * cellSize, top: seat.y * cellSize }}
+                >
+                  {student ? null : <span className="seat-empty">Seat</span>}
+                </div>
+
                 {student ? (
                   <div
-                    className={`student-chip ${activeLayer === 'layout' ? 'readonly' : ''} ${
+                    className={`student-chip student-seat-chip ${activeLayer === 'layout' ? 'readonly' : ''} ${
                       activeDrag?.studentId === student.id ? 'is-drag-origin' : ''
                     } ${
                       isDraggingStudent && student.id !== activeDrag?.studentId ? 'drop-student-candidate' : ''
                     } ${isDraggingStudent && dragHover.studentId === student.id ? 'drop-student-hover' : ''}`}
                     data-student-id={student.id}
+                    style={{ left: seat.x * cellSize + 7, top: seat.y * cellSize + 7 }}
                     onPointerDown={(event) => {
                       if (activeLayer !== 'student') {
                         return;
@@ -521,9 +525,7 @@ export function GridCanvas({
                   >
                     <span className="student-chip-name">{student.name}</span>
                   </div>
-                ) : (
-                  <span className="seat-empty">Seat</span>
-                )}
+                ) : null}
               </div>
             );
           })}
