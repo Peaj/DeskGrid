@@ -37,6 +37,11 @@ interface PendingPair {
   targetId: string;
 }
 
+interface PendingPairPosition {
+  left: number;
+  top: number;
+}
+
 interface ActiveStudentDrag {
   studentId: string;
   sourceSeatId: string | null;
@@ -81,6 +86,7 @@ export function GridCanvas({
   onShellWidthChange,
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
+  const [pendingPairPosition, setPendingPairPosition] = useState<PendingPairPosition | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveStudentDrag | null>(null);
   const [dragHover, setDragHover] = useState<DragHoverTarget>({ seatId: null, studentId: null });
   const [paintMode, setPaintMode] = useState<'add' | 'remove' | null>(null);
@@ -92,11 +98,46 @@ export function GridCanvas({
   const studentById = useMemo(() => new Map(students.map((student) => [student.id, student])), [students]);
   const studentBySeatId = useMemo(() => new Map(assignments.map((item) => [item.seatId, item.studentId])), [assignments]);
   const seatByStudentId = useMemo(() => new Map(assignments.map((item) => [item.studentId, item.seatId])), [assignments]);
+  const seatById = useMemo(() => new Map(seats.map((seat) => [seat.id, seat])), [seats]);
   const seatByCoord = useMemo(() => new Map(seats.map((seat) => [`${seat.x},${seat.y}`, seat])), [seats]);
   const occupiedCells = useMemo(() => new Set(seats.map((seat) => `${seat.x},${seat.y}`)), [seats]);
 
   const gridWidth = grid.width * cellSize;
   const gridHeight = grid.height * cellSize;
+
+  function getSeatCenter(seat: Seat): { x: number; y: number } {
+    return {
+      x: seat.x * cellSize + cellSize / 2,
+      y: seat.y * cellSize + cellSize / 2,
+    };
+  }
+
+  function getPendingPairPosition(pair: PendingPair): PendingPairPosition | null {
+    const canvasRect = canvasRef.current?.getBoundingClientRect();
+    if (!canvasRect) {
+      return null;
+    }
+
+    const sourceSeatId = seatByStudentId.get(pair.sourceId);
+    const targetSeatId = seatByStudentId.get(pair.targetId);
+    if (!sourceSeatId || !targetSeatId) {
+      return null;
+    }
+
+    const sourceSeat = seatById.get(sourceSeatId);
+    const targetSeat = seatById.get(targetSeatId);
+    if (!sourceSeat || !targetSeat) {
+      return null;
+    }
+
+    const sourceCenter = getSeatCenter(sourceSeat);
+    const targetCenter = getSeatCenter(targetSeat);
+
+    return {
+      left: canvasRect.left + (sourceCenter.x + targetCenter.x) / 2,
+      top: canvasRect.top + (sourceCenter.y + targetCenter.y) / 2,
+    };
+  }
 
   function toGridCell(clientX: number, clientY: number): { x: number; y: number } | null {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -304,6 +345,57 @@ export function GridCanvas({
     return () => window.removeEventListener('deskgrid-start-student-drag', onBenchDragStart as EventListener);
   }, []);
 
+  useEffect(() => {
+    if (!pendingPair) {
+      setPendingPairPosition(null);
+      return;
+    }
+
+    const updatePosition = (): void => {
+      const nextPosition = getPendingPairPosition(pendingPair);
+      if (!nextPosition) {
+        setPendingPair(null);
+        return;
+      }
+      setPendingPairPosition(nextPosition);
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [cellSize, pendingPair, seatById, seatByStudentId]);
+
+  useEffect(() => {
+    if (!pendingPair) {
+      return;
+    }
+
+    const dismissPendingPair = (): void => setPendingPair(null);
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.constraint-popover')) {
+        return;
+      }
+      dismissPendingPair();
+    };
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        dismissPendingPair();
+      }
+    };
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [pendingPair]);
+
   return (
     <section className="flex min-h-0 flex-col" ref={panelRef}>
       <div className="grid-shell" style={shellStyle}>
@@ -452,32 +544,48 @@ export function GridCanvas({
         </div>
       </div>
 
-      {pendingPair && (
-        <div className="constraint-popover mt-2">
-          <span>Create pair rule</span>
-          <button
-            className="ui-btn"
-            onClick={() => {
-              onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_next_to');
-              setPendingPair(null);
+      {pendingPair && pendingPairPosition &&
+        createPortal(
+          <div
+            className="constraint-popover"
+            style={{
+              left: pendingPairPosition.left,
+              top: pendingPairPosition.top,
             }}
           >
-            Must sit next to
-          </button>
-          <button
-            className="ui-btn"
-            onClick={() => {
-              onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_not_next_to');
-              setPendingPair(null);
-            }}
-          >
-            Must not sit next to
-          </button>
-          <button className="ui-btn" onClick={() => setPendingPair(null)}>
-            Cancel
-          </button>
-        </div>
-      )}
+            <div className="constraint-popover-title">Create pair rule</div>
+            <div className="constraint-popover-students">
+              <span>{studentById.get(pendingPair.sourceId)?.name ?? 'Unknown'}</span>
+              <span>+</span>
+              <span>{studentById.get(pendingPair.targetId)?.name ?? 'Unknown'}</span>
+            </div>
+            <div className="constraint-popover-actions">
+              <button
+                className="ui-btn ui-btn-compact"
+                autoFocus
+                onClick={() => {
+                  onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_next_to');
+                  setPendingPair(null);
+                }}
+              >
+                Must sit next to
+              </button>
+              <button
+                className="ui-btn ui-btn-compact"
+                onClick={() => {
+                  onAddPairConstraint(pendingPair.sourceId, pendingPair.targetId, 'must_not_next_to');
+                  setPendingPair(null);
+                }}
+              >
+                Must not sit next to
+              </button>
+              <button className="ui-btn ui-btn-compact" onClick={() => setPendingPair(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {activeDrag && draggedStudent &&
         createPortal(

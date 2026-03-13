@@ -467,7 +467,26 @@
   }
 
   .constraint-popover {
-    @apply flex flex-wrap items-center gap-2 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm shadow-soft;
+    position: fixed;
+    z-index: 170;
+    min-width: min(220px, calc(100vw - 1.5rem));
+    max-width: min(280px, calc(100vw - 1.5rem));
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.98);
+    @apply flex flex-col gap-2 rounded-xl border border-slate-300 px-3 py-3 text-sm shadow-soft backdrop-blur-sm;
+  }
+
+  .constraint-popover-title {
+    @apply text-sm font-semibold text-slate-800;
+  }
+
+  .constraint-popover-students {
+    @apply flex items-center gap-1 text-xs font-medium text-slate-500;
+  }
+
+  .constraint-popover-actions {
+    @apply flex flex-wrap gap-2;
   }
 
   .constraint-rule-list {
