@@ -103,7 +103,75 @@ jobs:
     runs-on: ubuntu-latest
     needs: [version-check, build]
     if: github.event_name == 'workflow_dispatch' || needs.version-check.outputs.version_changed == 'true'
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [version-check, deploy]
+    if: needs.version-check.outputs.version_changed == 'true'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract release notes from CHANGELOG
+        shell: bash
+        env:
+          VERSION: ${{ needs.version-check.outputs.current_version }}
+          DEPLOY_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const version = process.env.VERSION;
+          const deployUrl = process.env.DEPLOY_URL;
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const lines = changelog.split(/\r?\n/);
+          const header = `## [${version}]`;
+          const start = lines.findIndex((line) => line.startsWith(header));
+
+          if (start === -1) {
+            console.error(`Missing changelog section for ${version}. Expected a line starting with "${header}".`);
+            process.exit(1);
+          }
+
+          let end = lines.length;
+          for (let i = start + 1; i < lines.length; i += 1) {
+            if (lines[i].startsWith('## [')) {
+              end = i;
+              break;
+            }
+          }
+
+          const section = lines.slice(start + 1, end).join('\n').trim();
+          if (!section) {
+            console.error(`Changelog section for ${version} is empty.`);
+            process.exit(1);
+          }
+
+          const body = [
+            deployUrl ? `Deployment: ${deployUrl}` : '',
+            section,
+            '',
+          ].filter(Boolean).join('\n\n');
+
+          fs.writeFileSync('release-notes.md', `${body}\n`);
+          NODE
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.version-check.outputs.current_version }}
+          name: v${{ needs.version-check.outputs.current_version }}
+          body_path: release-notes.md
