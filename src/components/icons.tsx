@@ -48,3 +48,4 @@ export const BackIcon = withDefaultClass(MdExpandLess);
 export const CheckIcon = withDefaultClass(MdCheckCircle);
 export const CrossIcon = withDefaultClass(MdCancel);
 export const MinusIcon = withDefaultClass(MdRemove);
+export const CloseIcon = withDefaultClass(MdClose);

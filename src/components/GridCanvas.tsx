@@ -13,7 +13,7 @@ import type {
 } from '../domain/types';
 import { ConstraintOverlay } from './ConstraintOverlay';
 import { DEFAULT_CELL_SIZE, MAX_CELL_SIZE, MIN_CELL_SIZE } from './gridConstants';
-import { StudentPortraitIcon } from './icons';
+import { CloseIcon, NotNextToIcon, PairRuleIcon, StudentPortraitIcon } from './icons';
 
 export type GridLayer = 'layout' | 'student';
 
@@ -579,7 +579,17 @@ export function GridCanvas({
               top: pendingPairPosition.top,
             }}
           >
-            <div className="constraint-popover-title">Create pair rule</div>
+            <div className="constraint-popover-header">
+              <div className="constraint-popover-title">Create pair rule</div>
+              <button
+                className="ui-btn icon-btn constraint-popover-close"
+                onClick={() => setPendingPair(null)}
+                aria-label="Close pair rule dialog"
+                title="Close"
+              >
+                <CloseIcon />
+              </button>
+            </div>
             <div className="constraint-popover-students">
               <span>{studentById.get(pendingPair.sourceId)?.name ?? 'Unknown'}</span>
               <span>+</span>
@@ -594,6 +604,7 @@ export function GridCanvas({
                   setPendingPair(null);
                 }}
               >
+                <PairRuleIcon />
                 Must sit next to
               </button>
               <button
@@ -603,10 +614,8 @@ export function GridCanvas({
                   setPendingPair(null);
                 }}
               >
+                <NotNextToIcon />
                 Must not sit next to
-              </button>
-              <button className="ui-btn ui-btn-compact" onClick={() => setPendingPair(null)}>
-                Cancel
               </button>
             </div>
           </div>,

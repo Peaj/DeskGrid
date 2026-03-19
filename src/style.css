@@ -607,6 +607,14 @@
     @apply text-sm font-semibold text-slate-800;
   }
 
+  .constraint-popover-header {
+    @apply flex items-start justify-between gap-2;
+  }
+
+  .constraint-popover-close {
+    @apply h-7 w-7 shrink-0 rounded-full;
+  }
+
   .constraint-popover-students {
     @apply flex items-center gap-1 text-xs font-medium text-slate-500;
   }
