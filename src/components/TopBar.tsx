@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { LoadIcon, NewProjectIcon, SaveIcon, TrashIcon } from './icons';
 
 interface TopBarProps {
@@ -15,6 +16,40 @@ export function TopBar({
   onLoadLocal,
   onClearLocal,
 }: TopBarProps) {
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeMenu = (): void => {
+      menuRef.current?.removeAttribute('open');
+    };
+
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (target && menuRef.current?.contains(target)) {
+        return;
+      }
+      closeMenu();
+    };
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        closeMenu();
+      }
+    };
+
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
+  function runMenuAction(action: () => void): void {
+    action();
+    menuRef.current?.removeAttribute('open');
+  }
+
   return (
     <header className="app-bar">
       <div className="flex flex-wrap items-center gap-2">
@@ -25,22 +60,22 @@ export function TopBar({
           </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <details className="app-menu">
+          <details className="app-menu" ref={menuRef}>
             <summary className="ui-btn">Project</summary>
             <div className="app-menu-panel">
-              <button className="app-menu-item" onClick={onNewProject}>
+              <button className="app-menu-item" onClick={() => runMenuAction(onNewProject)}>
                 <NewProjectIcon />
                 New Project
               </button>
-              <button className="app-menu-item" onClick={onSaveLocal}>
+              <button className="app-menu-item" onClick={() => runMenuAction(onSaveLocal)}>
                 <SaveIcon />
                 Save Local
               </button>
-              <button className="app-menu-item" onClick={onLoadLocal}>
+              <button className="app-menu-item" onClick={() => runMenuAction(onLoadLocal)}>
                 <LoadIcon />
                 Load Local
               </button>
-              <button className="app-menu-item text-red-700" onClick={onClearLocal}>
+              <button className="app-menu-item text-red-700" onClick={() => runMenuAction(onClearLocal)}>
                 <TrashIcon />
                 Clear Local
               </button>

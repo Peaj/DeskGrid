@@ -89,6 +89,7 @@
 
   .app-menu > summary {
     list-style: none;
+    cursor: pointer;
   }
 
   .app-menu > summary::-webkit-details-marker {
@@ -101,6 +102,7 @@
 
   .app-menu-item {
     @apply flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100;
+    cursor: pointer;
   }
 
   .panel {
