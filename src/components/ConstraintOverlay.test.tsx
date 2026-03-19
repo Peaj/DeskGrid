@@ -37,6 +37,7 @@ describe('ConstraintOverlay', () => {
     expect(pairPath).toHaveAttribute('d');
     expect(pairPath?.getAttribute('d')).toContain('L');
     expect(pairPath?.getAttribute('d')).not.toContain('Q');
+    expect(container.querySelector('[aria-label="Together rule"]')).toBeInTheDocument();
   });
 
   it('renders pair constraints as curved paths', () => {
@@ -72,5 +73,31 @@ describe('ConstraintOverlay', () => {
     expect(pairPath?.tagName.toLowerCase()).toBe('path');
     expect(pairPath).toHaveAttribute('d');
     expect(pairPath?.getAttribute('d')).toContain('Q');
+    expect(container.querySelector('[aria-label="Avoid rule"]')).toBeInTheDocument();
+  });
+
+  it('renders position rule icons on the line midpoint', () => {
+    const { container } = render(
+      <svg>
+        <ConstraintOverlay
+          width={240}
+          height={180}
+          cellSize={60}
+          seats={[{ id: 'seat-a', x: 1, y: 1 }]}
+          assignments={[{ seatId: 'seat-a', studentId: 'student-a' }]}
+          pairConstraints={[]}
+          positionConstraints={[
+            {
+              id: 'position-1',
+              type: 'prefer_front',
+              studentId: 'student-a',
+              hard: false,
+            },
+          ]}
+        />
+      </svg>,
+    );
+
+    expect(container.querySelector('[aria-label="Front preference"]')).toBeInTheDocument();
   });
 });

@@ -328,6 +328,40 @@
     z-index: 4;
   }
 
+  .constraint-line-icon-fo {
+    overflow: visible;
+  }
+
+  .constraint-line-icon-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: rgba(255, 255, 255, 0.9);
+    color: #475569;
+  }
+
+  .constraint-line-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .constraint-line-icon-badge.pair-next-badge {
+    color: #168a55;
+  }
+
+  .constraint-line-icon-badge.pair-not-next-badge {
+    color: #d44f4f;
+  }
+
+  .constraint-line-icon-badge.position-link-badge {
+    color: #5f6ea9;
+  }
+
   .constraint-overlay .pair-link-underlay {
     stroke: rgba(255, 255, 255, 0.68);
     stroke-linecap: round;

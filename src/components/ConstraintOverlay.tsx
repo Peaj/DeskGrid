@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react';
 import type { Assignment, PairConstraint, PositionConstraint, Seat } from '../domain/types';
+import { BackIcon, FrontIcon, NotNextToIcon, PairRuleIcon } from './icons';
 
 interface ConstraintOverlayProps {
   width: number;
@@ -27,7 +29,18 @@ function areSeatsDirectlyAdjacent(seatA: Seat, seatB: Seat): boolean {
   return deltaX <= 1 && deltaY <= 1 && (deltaX !== 0 || deltaY !== 0);
 }
 
-function buildPairArcPath(
+function getQuadraticMidpoint(
+  from: { x: number; y: number },
+  control: { x: number; y: number },
+  to: { x: number; y: number },
+): { x: number; y: number } {
+  return {
+    x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x,
+    y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y,
+  };
+}
+
+function getPairGeometry(
   seatA: Seat,
   seatB: Seat,
   from: { x: number; y: number },
@@ -35,21 +48,21 @@ function buildPairArcPath(
   width: number,
   height: number,
   cellSize: number,
-): string {
+): { path: string; midpoint: { x: number; y: number } } {
+  const straightMidpoint = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.hypot(dx, dy);
 
-  if (distance < 1) {
-    return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+  if (distance < 1 || areSeatsDirectlyAdjacent(seatA, seatB)) {
+    return {
+      path: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
+      midpoint: straightMidpoint,
+    };
   }
 
-  if (areSeatsDirectlyAdjacent(seatA, seatB)) {
-    return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
-  }
-
-  const midX = (from.x + to.x) / 2;
-  const midY = (from.y + to.y) / 2;
+  const midX = straightMidpoint.x;
+  const midY = straightMidpoint.y;
   const perpX = -dy / distance;
   const perpY = dx / distance;
   const centerOffsetX = midX - width / 2;
@@ -59,10 +72,42 @@ function buildPairArcPath(
   const bendSign = outwardDot === 0 ? fallbackSign : Math.sign(outwardDot);
   const bend = clamp(distance * 0.22, cellSize * 0.4, cellSize * 1.3);
   const padding = cellSize * 0.3;
-  const controlX = clamp(midX + perpX * bendSign * bend, padding, width - padding);
-  const controlY = clamp(midY + perpY * bendSign * bend, padding, height - padding);
+  const control = {
+    x: clamp(midX + perpX * bendSign * bend, padding, width - padding),
+    y: clamp(midY + perpY * bendSign * bend, padding, height - padding),
+  };
 
-  return `M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`;
+  return {
+    path: `M ${from.x} ${from.y} Q ${control.x} ${control.y} ${to.x} ${to.y}`,
+    midpoint: getQuadraticMidpoint(from, control, to),
+  };
+}
+
+function getLineMidpoint(from: { x: number; y: number }, to: { x: number; y: number }): { x: number; y: number } {
+  return {
+    x: (from.x + to.x) / 2,
+    y: (from.y + to.y) / 2,
+  };
+}
+
+interface LineIconBadgeProps {
+  x: number;
+  y: number;
+  className: string;
+  label: string;
+  children: ReactNode;
+}
+
+function LineIconBadge({ x, y, className, label, children }: LineIconBadgeProps) {
+  const size = 22;
+
+  return (
+    <foreignObject x={x - size / 2} y={y - size / 2} width={size} height={size} className="constraint-line-icon-fo">
+      <div className={`constraint-line-icon-badge ${className}`} aria-label={label}>
+        {children}
+      </div>
+    </foreignObject>
+  );
 }
 
 export function ConstraintOverlay({
@@ -96,12 +141,20 @@ export function ConstraintOverlay({
         const from = seatCenter(seatA, cellSize);
         const to = seatCenter(seatB, cellSize);
         const className = constraint.type === 'must_next_to' ? 'pair-next' : 'pair-not-next';
-        const path = buildPairArcPath(seatA, seatB, from, to, width, height, cellSize);
+        const { path, midpoint } = getPairGeometry(seatA, seatB, from, to, width, height, cellSize);
 
         return (
           <g key={constraint.id}>
             <path className="pair-link-underlay" d={path} fill="none" strokeWidth="6" />
             <path className={className} d={path} fill="none" strokeWidth="3.5" />
+            <LineIconBadge
+              x={midpoint.x}
+              y={midpoint.y}
+              className={constraint.type === 'must_next_to' ? 'pair-next-badge' : 'pair-not-next-badge'}
+              label={constraint.type === 'must_next_to' ? 'Together rule' : 'Avoid rule'}
+            >
+              {constraint.type === 'must_next_to' ? <PairRuleIcon className="constraint-line-icon" /> : <NotNextToIcon className="constraint-line-icon" />}
+            </LineIconBadge>
           </g>
         );
       })}
@@ -117,17 +170,20 @@ export function ConstraintOverlay({
           x: width / 2,
           y: constraint.type === 'prefer_front' ? height - 8 : 8,
         };
+        const midpoint = getLineMidpoint(from, to);
 
         return (
-          <line
-            key={constraint.id}
-            className="position-link"
-            x1={from.x}
-            y1={from.y}
-            x2={to.x}
-            y2={to.y}
-            strokeWidth="2"
-          />
+          <g key={constraint.id}>
+            <line className="position-link" x1={from.x} y1={from.y} x2={to.x} y2={to.y} strokeWidth="2" />
+            <LineIconBadge
+              x={midpoint.x}
+              y={midpoint.y}
+              className="position-link-badge"
+              label={constraint.type === 'prefer_front' ? 'Front preference' : 'Back preference'}
+            >
+              {constraint.type === 'prefer_front' ? <FrontIcon className="constraint-line-icon" /> : <BackIcon className="constraint-line-icon" />}
+            </LineIconBadge>
+          </g>
         );
       })}
     </svg>
