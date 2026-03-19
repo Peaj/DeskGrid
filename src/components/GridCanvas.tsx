@@ -491,6 +491,7 @@ export function GridCanvas({
           {seats.map((seat) => {
             const studentId = studentBySeatId.get(seat.id);
             const student = studentId ? studentById.get(studentId) : undefined;
+            const studentForLayer = activeLayer === 'student' ? student : undefined;
             const isSourceSeat = activeDrag?.sourceSeatId === seat.id;
             const isSeatDropTarget =
               isDraggingStudent && dragHover.studentId === null && dragHover.seatId === seat.id && !isSourceSeat;
@@ -498,22 +499,22 @@ export function GridCanvas({
             return (
               <div key={seat.id}>
                 <div
-                  className={`seat-spot active-seat ${isSourceSeat ? 'drag-source-seat' : ''} ${
+                  className={`seat-spot active-seat ${activeLayer === 'student' ? 'student-layer-seat' : ''} ${
+                    isSourceSeat ? 'drag-source-seat' : ''
+                  } ${
                     isDraggingStudent ? 'drop-seat-candidate' : ''
                   } ${isSeatDropTarget ? 'drop-seat-hover' : ''}`}
                   style={{ left: seat.x * cellSize, top: seat.y * cellSize }}
                 >
-                  {student ? null : <span className="seat-empty">Seat</span>}
+                  {studentForLayer ? null : <span className="seat-empty">Seat</span>}
                 </div>
 
-                {student ? (
+                {studentForLayer ? (
                   <div
-                    className={`student-chip student-seat-chip ${activeLayer === 'layout' ? 'readonly' : ''} ${
-                      activeDrag?.studentId === student.id ? 'is-drag-origin' : ''
-                    } ${
-                      isDraggingStudent && student.id !== activeDrag?.studentId ? 'drop-student-candidate' : ''
-                    } ${isDraggingStudent && dragHover.studentId === student.id ? 'drop-student-hover' : ''}`}
-                    data-student-id={student.id}
+                    className={`student-chip student-seat-chip ${activeDrag?.studentId === studentForLayer.id ? 'is-drag-origin' : ''} ${
+                      isDraggingStudent && studentForLayer.id !== activeDrag?.studentId ? 'drop-student-candidate' : ''
+                    } ${isDraggingStudent && dragHover.studentId === studentForLayer.id ? 'drop-student-hover' : ''}`}
+                    data-student-id={studentForLayer.id}
                     style={{ left: seat.x * cellSize + 7, top: seat.y * cellSize + 7 }}
                     onPointerDown={(event) => {
                       if (activeLayer !== 'student') {
@@ -526,7 +527,7 @@ export function GridCanvas({
                       setPendingPair(null);
                       const tokenRect = event.currentTarget.getBoundingClientRect();
                       setActiveDrag({
-                        studentId: student.id,
+                        studentId: studentForLayer.id,
                         sourceSeatId: seat.id,
                         startClientX: event.clientX,
                         startClientY: event.clientY,
@@ -547,7 +548,7 @@ export function GridCanvas({
                     <span className="student-chip-portrait" aria-hidden="true">
                       <StudentPortraitIcon className="student-chip-portrait-icon" />
                     </span>
-                    <span className="student-chip-name">{student.name}</span>
+                    <span className="student-chip-name">{studentForLayer.name}</span>
                   </div>
                 ) : null}
               </div>

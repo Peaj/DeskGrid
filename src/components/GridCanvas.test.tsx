@@ -63,6 +63,31 @@ describe('GridCanvas', () => {
     expect(onToggleSeat).not.toHaveBeenCalled();
   });
 
+  it('hides student chips on the layout layer', () => {
+    const { container, queryByText } = render(
+      <GridCanvas
+        activeLayer="layout"
+        grid={{ width: 4, height: 2, frontEdge: 'bottom' }}
+        seats={[{ id: 'seat-a', x: 0, y: 0 }]}
+        students={[{ id: 'student-a', name: 'Alice' }]}
+        assignments={[{ seatId: 'seat-a', studentId: 'student-a' }]}
+        pairConstraints={[]}
+        positionConstraints={[]}
+        onToggleSeat={vi.fn()}
+        onAddPairConstraint={vi.fn()}
+        onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
+      />,
+    );
+
+    expect(queryByText('Alice')).toBeNull();
+    expect(container.querySelector('.student-seat-chip')).toBeNull();
+    expect(container.querySelector('.seat-empty')).toBeInTheDocument();
+  });
+
   it('paints multiple seats while dragging in layout layer', () => {
     const onToggleSeat = vi.fn();
 
