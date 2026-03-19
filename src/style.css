@@ -328,13 +328,23 @@
     z-index: 4;
   }
 
+  .constraint-overlay .pair-link-underlay {
+    stroke: rgba(255, 255, 255, 0.68);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .constraint-overlay .pair-next {
-    stroke: #2f9860;
-    stroke-dasharray: 8 6;
+    stroke: #168a55;
+    stroke-dasharray: 9 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .constraint-overlay .pair-not-next {
     stroke: #d44f4f;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .constraint-overlay .position-link {
