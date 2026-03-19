@@ -17,6 +17,7 @@ export default function App() {
   const appVersion = __APP_VERSION__;
   const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
   const [gridShellWidth, setGridShellWidth] = useState(0);
+  const [hoveredConstraintId, setHoveredConstraintId] = useState<string | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const layoutInputRef = useRef<HTMLInputElement>(null);
   const rosterInputRef = useRef<HTMLInputElement>(null);
@@ -143,6 +144,8 @@ export default function App() {
                 onMoveStudentToSeat={moveStudentToSeat}
                 onUnassignStudent={unassignStudent}
                 onShellWidthChange={setGridShellWidth}
+                hoveredConstraintId={hoveredConstraintId}
+                onHoveredConstraintChange={setHoveredConstraintId}
               />
               {activeLayer === 'student' && (
                 <div className="grid-shell" style={{ width: gridShellWidth || undefined, maxWidth: '100%' }}>
@@ -167,6 +170,8 @@ export default function App() {
                   positionConstraints={positionConstraints}
                   onRemovePairConstraint={removePairConstraint}
                   onRemovePositionConstraint={removePositionConstraint}
+                  hoveredConstraintId={hoveredConstraintId}
+                  onHoveredConstraintChange={setHoveredConstraintId}
                 />
               </aside>
             )}

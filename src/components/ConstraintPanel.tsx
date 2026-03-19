@@ -21,6 +21,8 @@ interface ConstraintPanelProps {
   positionConstraints: PositionConstraint[];
   onRemovePairConstraint: (constraintId: string) => void;
   onRemovePositionConstraint: (constraintId: string) => void;
+  hoveredConstraintId: string | null;
+  onHoveredConstraintChange: (constraintId: string | null) => void;
 }
 
 export function ConstraintPanel({
@@ -32,6 +34,8 @@ export function ConstraintPanel({
   positionConstraints,
   onRemovePairConstraint,
   onRemovePositionConstraint,
+  hoveredConstraintId,
+  onHoveredConstraintChange,
 }: ConstraintPanelProps) {
   const studentNameById = useMemo(() => new Map(students.map((student) => [student.id, student.name])), [students]);
   const seatById = useMemo(() => new Map(seats.map((seat) => [seat.id, seat])), [seats]);
@@ -91,7 +95,12 @@ export function ConstraintPanel({
       <div className="constraint-rule-list">
         {totalRules === 0 && <p className="constraint-empty">No rules.</p>}
         {pairStates.map(({ constraint, state }) => (
-          <article key={constraint.id} className={`constraint-rule-card state-${state}`}>
+          <article
+            key={constraint.id}
+            className={`constraint-rule-card state-${state} ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+            onPointerEnter={() => onHoveredConstraintChange(constraint.id)}
+            onPointerLeave={() => onHoveredConstraintChange(null)}
+          >
             <span className="constraint-status-icon" title={state === 'pass' ? 'Rule satisfied' : state === 'fail' ? 'Rule violated' : 'Pending'}>
               {state === 'pass' ? <CheckIcon /> : state === 'fail' ? <CrossIcon /> : <MinusIcon />}
             </span>
@@ -115,7 +124,12 @@ export function ConstraintPanel({
           </article>
         ))}
         {positionStates.map(({ constraint, state }) => (
-          <article key={constraint.id} className={`constraint-rule-card state-${state}`}>
+          <article
+            key={constraint.id}
+            className={`constraint-rule-card state-${state} ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+            onPointerEnter={() => onHoveredConstraintChange(constraint.id)}
+            onPointerLeave={() => onHoveredConstraintChange(null)}
+          >
             <span className="constraint-status-icon" title={state === 'pass' ? 'Preference met' : state === 'fail' ? 'Preference not met' : 'Pending'}>
               {state === 'pass' ? <CheckIcon /> : state === 'fail' ? <CrossIcon /> : <MinusIcon />}
             </span>

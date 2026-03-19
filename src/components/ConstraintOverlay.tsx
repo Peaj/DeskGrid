@@ -10,6 +10,9 @@ interface ConstraintOverlayProps {
   assignments: Assignment[];
   pairConstraints: PairConstraint[];
   positionConstraints: PositionConstraint[];
+  hoveredConstraintId: string | null;
+  onHoveredConstraintChange: (constraintId: string | null) => void;
+  interactionEnabled: boolean;
 }
 
 function seatCenter(seat: Seat, cellSize: number): { x: number; y: number } {
@@ -96,17 +99,24 @@ interface LineIconBadgeProps {
   className: string;
   label: string;
   children: ReactNode;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
 }
 
-function LineIconBadge({ x, y, className, label, children }: LineIconBadgeProps) {
-  const size = 22;
-
+function LineIconBadge({ x, y, className, label, children, onPointerEnter, onPointerLeave }: LineIconBadgeProps) {
   return (
-    <foreignObject x={x - size / 2} y={y - size / 2} width={size} height={size} className="constraint-line-icon-fo">
-      <div className={`constraint-line-icon-badge ${className}`} aria-label={label}>
-        {children}
-      </div>
-    </foreignObject>
+    <div
+      className={`constraint-line-icon-badge ${className}`}
+      aria-label={label}
+      style={{
+        left: x,
+        top: y,
+      }}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -118,6 +128,9 @@ export function ConstraintOverlay({
   assignments,
   pairConstraints,
   positionConstraints,
+  hoveredConstraintId,
+  onHoveredConstraintChange,
+  interactionEnabled,
 }: ConstraintOverlayProps) {
   const seatById = new Map(seats.map((seat) => [seat.id, seat]));
   const seatByStudent = new Map<string, Seat>();
@@ -129,63 +142,119 @@ export function ConstraintOverlay({
     }
   }
 
+  const pairItems = pairConstraints.flatMap((constraint) => {
+    const seatA = seatByStudent.get(constraint.studentAId);
+    const seatB = seatByStudent.get(constraint.studentBId);
+    if (!seatA || !seatB) {
+      return [];
+    }
+
+    const from = seatCenter(seatA, cellSize);
+    const to = seatCenter(seatB, cellSize);
+    const className = constraint.type === 'must_next_to' ? 'pair-next' : 'pair-not-next';
+    const { path, midpoint } = getPairGeometry(seatA, seatB, from, to, width, height, cellSize);
+
+    return [{ constraint, className, path, midpoint }];
+  });
+
+  const positionItems = positionConstraints.flatMap((constraint) => {
+    const seat = seatByStudent.get(constraint.studentId);
+    if (!seat) {
+      return [];
+    }
+
+    const from = seatCenter(seat, cellSize);
+    const to = {
+      x: width / 2,
+      y: constraint.type === 'prefer_front' ? height - 8 : 8,
+    };
+
+    return [{ constraint, from, to, midpoint: getLineMidpoint(from, to) }];
+  });
+
   return (
-    <svg className="constraint-overlay" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      {pairConstraints.map((constraint) => {
-        const seatA = seatByStudent.get(constraint.studentAId);
-        const seatB = seatByStudent.get(constraint.studentBId);
-        if (!seatA || !seatB) {
-          return null;
-        }
-
-        const from = seatCenter(seatA, cellSize);
-        const to = seatCenter(seatB, cellSize);
-        const className = constraint.type === 'must_next_to' ? 'pair-next' : 'pair-not-next';
-        const { path, midpoint } = getPairGeometry(seatA, seatB, from, to, width, height, cellSize);
-
-        return (
+    <>
+      <svg className="constraint-overlay" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        {pairItems.map(({ constraint, className, path }) => (
           <g key={constraint.id}>
-            <path className="pair-link-underlay" d={path} fill="none" strokeWidth="6" />
-            <path className={className} d={path} fill="none" strokeWidth="3.5" />
-            <LineIconBadge
-              x={midpoint.x}
-              y={midpoint.y}
-              className={constraint.type === 'must_next_to' ? 'pair-next-badge' : 'pair-not-next-badge'}
-              label={constraint.type === 'must_next_to' ? 'Together rule' : 'Avoid rule'}
-            >
-              {constraint.type === 'must_next_to' ? <PairRuleIcon className="constraint-line-icon" /> : <NotNextToIcon className="constraint-line-icon" />}
-            </LineIconBadge>
+            <path
+              className={`pair-link-underlay ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+              d={path}
+              fill="none"
+              strokeWidth="6"
+            />
+            <path
+              className={`${className} ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+              d={path}
+              fill="none"
+              strokeWidth="3.5"
+            />
+            <path
+              className="constraint-link-hit-area"
+              d={path}
+              fill="none"
+              strokeWidth="16"
+              onPointerEnter={interactionEnabled ? () => onHoveredConstraintChange(constraint.id) : undefined}
+              onPointerLeave={interactionEnabled ? () => onHoveredConstraintChange(null) : undefined}
+            />
           </g>
-        );
-      })}
+        ))}
 
-      {positionConstraints.map((constraint) => {
-        const seat = seatByStudent.get(constraint.studentId);
-        if (!seat) {
-          return null;
-        }
-
-        const from = seatCenter(seat, cellSize);
-        const to = {
-          x: width / 2,
-          y: constraint.type === 'prefer_front' ? height - 8 : 8,
-        };
-        const midpoint = getLineMidpoint(from, to);
-
-        return (
+        {positionItems.map(({ constraint, from, to }) => (
           <g key={constraint.id}>
-            <line className="position-link" x1={from.x} y1={from.y} x2={to.x} y2={to.y} strokeWidth="2" />
-            <LineIconBadge
-              x={midpoint.x}
-              y={midpoint.y}
-              className="position-link-badge"
-              label={constraint.type === 'prefer_front' ? 'Front preference' : 'Back preference'}
-            >
-              {constraint.type === 'prefer_front' ? <FrontIcon className="constraint-line-icon" /> : <BackIcon className="constraint-line-icon" />}
-            </LineIconBadge>
+            <line
+              className={`position-link ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+              x1={from.x}
+              y1={from.y}
+              x2={to.x}
+              y2={to.y}
+              strokeWidth="2"
+            />
+            <line
+              className="constraint-link-hit-area"
+              x1={from.x}
+              y1={from.y}
+              x2={to.x}
+              y2={to.y}
+              strokeWidth="16"
+              onPointerEnter={interactionEnabled ? () => onHoveredConstraintChange(constraint.id) : undefined}
+              onPointerLeave={interactionEnabled ? () => onHoveredConstraintChange(null) : undefined}
+            />
           </g>
-        );
-      })}
-    </svg>
+        ))}
+      </svg>
+
+      <div className="constraint-overlay-icons" style={{ width, height }}>
+        {pairItems.map(({ constraint, midpoint }) => (
+          <LineIconBadge
+            key={constraint.id}
+            x={midpoint.x}
+            y={midpoint.y}
+            className={`${constraint.type === 'must_next_to' ? 'pair-next-badge' : 'pair-not-next-badge'} ${
+              hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''
+            }`}
+            label={constraint.type === 'must_next_to' ? 'Together rule' : 'Avoid rule'}
+            onPointerEnter={interactionEnabled ? () => onHoveredConstraintChange(constraint.id) : undefined}
+            onPointerLeave={interactionEnabled ? () => onHoveredConstraintChange(null) : undefined}
+          >
+            {constraint.type === 'must_next_to' ? <PairRuleIcon className="constraint-line-icon" /> : <NotNextToIcon className="constraint-line-icon" />}
+          </LineIconBadge>
+        ))}
+
+        {positionItems.map(({ constraint, midpoint }) => (
+          <LineIconBadge
+            key={constraint.id}
+            x={midpoint.x}
+            y={midpoint.y}
+            className={`position-link-badge ${hoveredConstraintId === constraint.id ? 'is-linked-hover' : ''}`}
+            label={constraint.type === 'prefer_front' ? 'Front preference' : 'Back preference'}
+            onPointerEnter={interactionEnabled ? () => onHoveredConstraintChange(constraint.id) : undefined}
+            onPointerLeave={interactionEnabled ? () => onHoveredConstraintChange(null) : undefined}
+          >
+            {constraint.type === 'prefer_front' ? <FrontIcon className="constraint-line-icon" /> : <BackIcon className="constraint-line-icon" />}
+          </LineIconBadge>
+        ))}
+      </div>
+    </>
   );
 }

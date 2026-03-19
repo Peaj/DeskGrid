@@ -328,11 +328,21 @@
     z-index: 4;
   }
 
-  .constraint-line-icon-fo {
-    overflow: visible;
+  .constraint-link-hit-area {
+    stroke: transparent;
+    pointer-events: stroke;
+  }
+
+  .constraint-overlay-icons {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 6;
   }
 
   .constraint-line-icon-badge {
+    position: absolute;
+    transform: translate(-50%, -50%);
     width: 22px;
     height: 22px;
     border-radius: 999px;
@@ -343,6 +353,22 @@
     border: 1px solid rgba(148, 163, 184, 0.55);
     background: rgba(255, 255, 255, 0.9);
     color: #475569;
+  }
+
+  .constraint-overlay-icons .constraint-line-icon-badge {
+    pointer-events: auto;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .constraint-line-icon-badge.is-linked-hover {
+    transform: translate(-50%, -50%) scale(1.08);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+    border-color: rgba(51, 65, 85, 0.45);
+    background: rgba(255, 255, 255, 0.98);
   }
 
   .constraint-line-icon {
@@ -368,22 +394,44 @@
     stroke-linejoin: round;
   }
 
+  .constraint-overlay .pair-link-underlay.is-linked-hover {
+    stroke: rgba(255, 255, 255, 0.84);
+  }
+
   .constraint-overlay .pair-next {
     stroke: #168a55;
     stroke-dasharray: 9 6;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition:
+      stroke-width 120ms ease,
+      opacity 120ms ease;
   }
 
   .constraint-overlay .pair-not-next {
     stroke: #d44f4f;
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition:
+      stroke-width 120ms ease,
+      opacity 120ms ease;
   }
 
   .constraint-overlay .position-link {
     stroke: #5f6ea9;
     stroke-dasharray: 4 5;
+    transition:
+      stroke-width 120ms ease,
+      opacity 120ms ease;
+  }
+
+  .constraint-overlay .pair-next.is-linked-hover,
+  .constraint-overlay .pair-not-next.is-linked-hover {
+    stroke-width: 4.5;
+  }
+
+  .constraint-overlay .position-link.is-linked-hover {
+    stroke-width: 3;
   }
 
   .seat-spot {
@@ -548,6 +596,11 @@
 
   .constraint-rule-card {
     @apply flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 shadow-sm;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease,
+      border-color 120ms ease,
+      background-color 120ms ease;
   }
 
   .constraint-rule-card.state-pass {
@@ -560,6 +613,23 @@
 
   .constraint-rule-card.state-pending {
     @apply border-slate-200 bg-white;
+  }
+
+  .constraint-rule-card.is-linked-hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+  }
+
+  .constraint-rule-card.state-pass.is-linked-hover {
+    @apply border-emerald-300 bg-emerald-50;
+  }
+
+  .constraint-rule-card.state-fail.is-linked-hover {
+    @apply border-rose-300 bg-rose-50;
+  }
+
+  .constraint-rule-card.state-pending.is-linked-hover {
+    @apply border-sky-300 bg-sky-50/70;
   }
 
   .constraint-status-icon {

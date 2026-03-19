@@ -20,6 +20,8 @@ describe('GridCanvas', () => {
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
         onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
       />,
     );
 
@@ -48,6 +50,8 @@ describe('GridCanvas', () => {
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
         onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
       />,
     );
 
@@ -76,6 +80,8 @@ describe('GridCanvas', () => {
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
         onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
       />,
     );
 
@@ -116,6 +122,8 @@ describe('GridCanvas', () => {
         onAddPositionConstraint={vi.fn()}
         onMoveStudentToSeat={vi.fn()}
         onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
       />,
     );
 

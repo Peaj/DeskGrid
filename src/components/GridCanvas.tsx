@@ -30,6 +30,8 @@ interface GridCanvasProps {
   onMoveStudentToSeat: (studentId: string, targetSeatId: string) => void;
   onUnassignStudent: (studentId: string) => void;
   onShellWidthChange?: (width: number) => void;
+  hoveredConstraintId: string | null;
+  onHoveredConstraintChange: (constraintId: string | null) => void;
 }
 
 interface PendingPair {
@@ -84,6 +86,8 @@ export function GridCanvas({
   onMoveStudentToSeat,
   onUnassignStudent,
   onShellWidthChange,
+  hoveredConstraintId,
+  onHoveredConstraintChange,
 }: GridCanvasProps) {
   const [pendingPair, setPendingPair] = useState<PendingPair | null>(null);
   const [pendingPairPosition, setPendingPairPosition] = useState<PendingPairPosition | null>(null);
@@ -197,6 +201,12 @@ export function GridCanvas({
   useEffect(() => {
     onShellWidthChange?.(gridWidth);
   }, [gridWidth, onShellWidthChange]);
+
+  useEffect(() => {
+    if (activeLayer !== 'student' || isDraggingStudent) {
+      onHoveredConstraintChange(null);
+    }
+  }, [activeLayer, isDraggingStudent, onHoveredConstraintChange]);
 
   function paintSeatCell(cell: { x: number; y: number }, mode: 'add' | 'remove'): void {
     const key = `${cell.x},${cell.y}`;
@@ -463,6 +473,9 @@ export function GridCanvas({
                 assignments={assignments}
                 pairConstraints={pairConstraints}
                 positionConstraints={positionConstraints}
+                hoveredConstraintId={hoveredConstraintId}
+                onHoveredConstraintChange={onHoveredConstraintChange}
+                interactionEnabled={!isDraggingStudent && !pendingPair}
               />
             </>
           )}

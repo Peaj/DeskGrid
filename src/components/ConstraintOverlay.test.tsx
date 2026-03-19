@@ -28,6 +28,9 @@ describe('ConstraintOverlay', () => {
             },
           ]}
           positionConstraints={[]}
+          hoveredConstraintId={null}
+          onHoveredConstraintChange={() => undefined}
+          interactionEnabled
         />
       </svg>,
     );
@@ -65,6 +68,9 @@ describe('ConstraintOverlay', () => {
             },
           ]}
           positionConstraints={[]}
+          hoveredConstraintId={null}
+          onHoveredConstraintChange={() => undefined}
+          interactionEnabled
         />
       </svg>,
     );
@@ -94,10 +100,49 @@ describe('ConstraintOverlay', () => {
               hard: false,
             },
           ]}
+          hoveredConstraintId={null}
+          onHoveredConstraintChange={() => undefined}
+          interactionEnabled
         />
       </svg>,
     );
 
     expect(container.querySelector('[aria-label="Front preference"]')).toBeInTheDocument();
+  });
+
+  it('marks the matching connection as hovered when a linked constraint id is provided', () => {
+    const { container } = render(
+      <svg>
+        <ConstraintOverlay
+          width={240}
+          height={180}
+          cellSize={60}
+          seats={[
+            { id: 'seat-a', x: 0, y: 1 },
+            { id: 'seat-b', x: 3, y: 1 },
+          ]}
+          assignments={[
+            { seatId: 'seat-a', studentId: 'student-a' },
+            { seatId: 'seat-b', studentId: 'student-b' },
+          ]}
+          pairConstraints={[
+            {
+              id: 'pair-1',
+              type: 'must_next_to',
+              studentAId: 'student-a',
+              studentBId: 'student-b',
+              hard: true,
+            },
+          ]}
+          positionConstraints={[]}
+          hoveredConstraintId="pair-1"
+          onHoveredConstraintChange={() => undefined}
+          interactionEnabled
+        />
+      </svg>,
+    );
+
+    expect(container.querySelector('.pair-next.is-linked-hover')).toBeInTheDocument();
+    expect(container.querySelector('.constraint-line-icon-badge.is-linked-hover')).toBeInTheDocument();
   });
 });
