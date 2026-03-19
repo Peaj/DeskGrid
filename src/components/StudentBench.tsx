@@ -75,7 +75,10 @@ export function StudentBench({ students, unassignedStudentIds, onImportCsvText }
       onDragEnd={() => setIsDragOver(false)}
     >
       <div className="panel-header">
-        <h2>Student Bench</h2>
+        <h3 className="panel-section-title section-title-with-icon">
+          <StudentPortraitIcon />
+          <span>Student Bench</span>
+        </h3>
         <p className="meta">
           Total: {students.length} | Bench: {benchStudents.length}
         </p>

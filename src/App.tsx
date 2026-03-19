@@ -35,6 +35,7 @@ export default function App() {
     toggleSeat,
     importStudentsFromCsvText,
     randomAssign,
+    benchAllStudents,
     solve,
     moveStudentToSeat,
     unassignStudent,
@@ -160,7 +161,7 @@ export default function App() {
 
             {activeLayer === 'student' && (
               <aside className="flex h-full min-h-0 flex-col gap-3">
-                <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onSolve={solve} />
+                <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onBenchAllStudents={benchAllStudents} onSolve={solve} />
                 <ConstraintPanel
                   grid={grid}
                   seats={seats}

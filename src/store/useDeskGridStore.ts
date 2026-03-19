@@ -108,6 +108,7 @@ interface DeskGridState {
   toggleSeat: (x: number, y: number) => void;
   importStudentsFromCsvText: (text: string) => void;
   randomAssign: () => void;
+  benchAllStudents: () => void;
   solve: () => void;
   moveStudentToSeat: (studentId: string, targetSeatId: string) => void;
   unassignStudent: (studentId: string) => void;
@@ -193,6 +194,18 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       hardViolations: [],
       scoreBreakdown: defaultScore,
       notices: ['Random assignment generated.'],
+    });
+    withProjectPersistence(get());
+  },
+
+  benchAllStudents: () => {
+    const state = get();
+    set({
+      assignments: [],
+      unassignedStudentIds: state.students.map((student) => student.id),
+      hardViolations: [],
+      scoreBreakdown: defaultScore,
+      notices: ['All students moved back to the bench.'],
     });
     withProjectPersistence(get());
   },

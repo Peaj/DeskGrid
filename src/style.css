@@ -231,6 +231,14 @@
     @apply inline-flex items-center gap-1.5;
   }
 
+  .panel-section-title {
+    @apply m-0 text-base font-semibold text-slate-800;
+  }
+
+  .panel-section-title .ui-icon {
+    @apply h-[18px] w-[18px];
+  }
+
   .meta {
     @apply text-sm text-slate-600;
   }
@@ -249,6 +257,22 @@
 
   .solver-actions {
     @apply flex flex-wrap gap-2;
+  }
+
+  .solver-stats-row {
+    @apply grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-slate-50/80 p-2;
+  }
+
+  .solver-stat-card {
+    @apply flex min-w-0 flex-col rounded-lg border border-white/80 bg-white/80 px-3 py-2 shadow-sm;
+  }
+
+  .solver-stat-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+  }
+
+  .solver-stat-value {
+    @apply mt-1 text-lg font-semibold text-slate-800;
   }
 
   .meta-list {

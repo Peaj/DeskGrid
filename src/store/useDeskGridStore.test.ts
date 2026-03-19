@@ -105,4 +105,31 @@ describe('DeskGrid store', () => {
     expect(next.assignments).toHaveLength(0);
     expect(next.unassignedStudentIds).toContain('s1');
   });
+
+  it('benches all students and resets solver state', () => {
+    useDeskGridStore.setState({
+      seats: [
+        { id: 'seat:0,0', x: 0, y: 0 },
+        { id: 'seat:1,0', x: 1, y: 0 },
+      ],
+      students: [
+        { id: 's1', name: 'A' },
+        { id: 's2', name: 'B' },
+      ],
+      assignments: [
+        { seatId: 'seat:0,0', studentId: 's1' },
+        { seatId: 'seat:1,0', studentId: 's2' },
+      ],
+      hardViolations: [{ constraintId: 'pair:1', message: 'Conflict' }],
+      scoreBreakdown: { hardViolations: 1, softPenalty: 4, totalPenalty: 14 },
+    });
+
+    useDeskGridStore.getState().benchAllStudents();
+
+    const next = useDeskGridStore.getState();
+    expect(next.assignments).toHaveLength(0);
+    expect(next.unassignedStudentIds).toEqual(['s1', 's2']);
+    expect(next.hardViolations).toHaveLength(0);
+    expect(next.scoreBreakdown).toEqual({ hardViolations: 0, softPenalty: 0, totalPenalty: 0 });
+  });
 });

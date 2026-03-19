@@ -88,10 +88,12 @@ export function ConstraintPanel({
 
   return (
     <section className="panel constraint-panel flex min-h-0 flex-col">
-      <h3 className="section-title-with-icon">
-        <PairRuleIcon />
-        <span>Rules</span>
-      </h3>
+      <div className="panel-header">
+        <h3 className="panel-section-title section-title-with-icon">
+          <PairRuleIcon />
+          <span>Rules</span>
+        </h3>
+      </div>
       <div className="constraint-rule-list">
         {totalRules === 0 && <p className="constraint-empty">No rules.</p>}
         {pairStates.map(({ constraint, state }) => (
