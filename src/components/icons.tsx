@@ -15,6 +15,7 @@ import {
   MdWarningAmber,
   MdCreateNewFolder,
   MdFolderOpen,
+  MdPerson,
   MdSave,
   MdShuffle,
   MdSwapVert,
@@ -36,6 +37,7 @@ export const TrashIcon = withDefaultClass(MdDeleteOutline);
 export const NewProjectIcon = withDefaultClass(MdCreateNewFolder);
 export const ShuffleIcon = withDefaultClass(MdShuffle);
 export const SolveIcon = withDefaultClass(MdAutoFixHigh);
+export const StudentPortraitIcon = withDefaultClass(MdPerson);
 export const PairRuleIcon = withDefaultClass(MdLink);
 export const PositionRuleIcon = withDefaultClass(MdSwapVert);
 export const ConflictIcon = withDefaultClass(MdWarningAmber);

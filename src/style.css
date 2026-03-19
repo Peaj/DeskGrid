@@ -27,6 +27,11 @@
     );
     opacity: 0.25;
   }
+
+  body.is-student-dragging,
+  body.is-student-dragging * {
+    cursor: grabbing !important;
+  }
 }
 
 @layer components {
@@ -489,6 +494,8 @@
   }
 
   .student-chip {
+    position: relative;
+    overflow: hidden;
     @apply pointer-events-auto flex select-none flex-col items-center justify-center gap-0 rounded-full border border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100 px-1 py-1 text-center text-[11px] leading-tight text-amber-900;
     width: calc(var(--cell-size, 64px) - 14px);
     height: calc(var(--cell-size, 64px) - 14px);
@@ -499,6 +506,26 @@
       box-shadow 120ms ease,
       border-color 120ms ease,
       background-color 120ms ease;
+  }
+
+  .student-chip-portrait {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .student-chip-portrait-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 150%;
+    height: 150%;
+    max-width: none;
+    max-height: none;
+    color: rgba(180, 116, 19, 0.15);
+    transform: translate(-50%, -50%);
   }
 
   .student-chip:not(.readonly) {
@@ -544,6 +571,8 @@
   }
 
   .student-chip-name {
+    position: relative;
+    z-index: 1;
     @apply px-1 font-semibold;
     pointer-events: none;
     display: -webkit-box;
@@ -699,15 +728,6 @@
 
   .bench-empty-dropzone p:first-child {
     @apply font-semibold text-slate-700;
-  }
-
-  .student-bench-name {
-    @apply text-[11px] font-semibold;
-    display: -webkit-box;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
   }
 
   .student-bench-state {

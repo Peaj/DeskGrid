@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Student } from '../domain/types';
+import { StudentPortraitIcon } from './icons';
 
 interface StudentBenchProps {
   students: Student[];
@@ -115,7 +116,10 @@ export function StudentBench({ students, unassignedStudentIds, onImportCsvText }
                 }}
                 title="Drag to an empty or occupied seat to place this student."
               >
-                <span className="student-bench-name">{student.name}</span>
+                <span className="student-chip-portrait" aria-hidden="true">
+                  <StudentPortraitIcon className="student-chip-portrait-icon" />
+                </span>
+                <span className="student-chip-name">{student.name}</span>
               </div>
             );
           })}

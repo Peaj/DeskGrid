@@ -13,6 +13,7 @@ import type {
 } from '../domain/types';
 import { ConstraintOverlay } from './ConstraintOverlay';
 import { DEFAULT_CELL_SIZE, MAX_CELL_SIZE, MIN_CELL_SIZE } from './gridConstants';
+import { StudentPortraitIcon } from './icons';
 
 export type GridLayer = 'layout' | 'student';
 
@@ -201,6 +202,13 @@ export function GridCanvas({
   useEffect(() => {
     onShellWidthChange?.(gridWidth);
   }, [gridWidth, onShellWidthChange]);
+
+  useEffect(() => {
+    document.body.classList.toggle('is-student-dragging', isDraggingStudent);
+    return () => {
+      document.body.classList.remove('is-student-dragging');
+    };
+  }, [isDraggingStudent]);
 
   useEffect(() => {
     if (activeLayer !== 'student' || isDraggingStudent) {
@@ -536,6 +544,9 @@ export function GridCanvas({
                         : 'Seat occupied'
                     }
                   >
+                    <span className="student-chip-portrait" aria-hidden="true">
+                      <StudentPortraitIcon className="student-chip-portrait-icon" />
+                    </span>
                     <span className="student-chip-name">{student.name}</span>
                   </div>
                 ) : null}
@@ -613,6 +624,9 @@ export function GridCanvas({
               height: activeDrag.tokenHeight,
             }}
           >
+            <span className="student-chip-portrait" aria-hidden="true">
+              <StudentPortraitIcon className="student-chip-portrait-icon" />
+            </span>
             <span className="student-chip-name">{draggedStudent.name}</span>
           </div>,
           document.body,
