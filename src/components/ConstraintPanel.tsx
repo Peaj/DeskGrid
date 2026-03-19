@@ -7,10 +7,8 @@ import {
   CrossIcon,
   FrontIcon,
   MinusIcon,
-  NextToIcon,
   NotNextToIcon,
   PairRuleIcon,
-  PositionRuleIcon,
   TrashIcon,
 } from './icons';
 
@@ -99,12 +97,9 @@ export function ConstraintPanel({
             </span>
             <div className="constraint-rule-body">
               <div className="constraint-rule-line">
-                <span className="constraint-rule-type" title="Pair rule">
-                  <PairRuleIcon />
-                </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentAId) ?? 'Unknown'}</span>
                 <span className="constraint-link-icon" title={constraint.type === 'must_next_to' ? 'Must sit next to' : 'Must not sit next to'}>
-                  {constraint.type === 'must_next_to' ? <NextToIcon /> : <NotNextToIcon />}
+                  {constraint.type === 'must_next_to' ? <PairRuleIcon /> : <NotNextToIcon />}
                 </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentBId) ?? 'Unknown'}</span>
               </div>
@@ -126,9 +121,6 @@ export function ConstraintPanel({
             </span>
             <div className="constraint-rule-body">
               <div className="constraint-rule-line">
-                <span className="constraint-rule-type" title="Position preference">
-                  <PositionRuleIcon />
-                </span>
                 <span className="constraint-student">{studentNameById.get(constraint.studentId) ?? 'Unknown'}</span>
                 <span className="constraint-link-icon" title={constraint.type === 'prefer_front' ? 'Prefer front' : 'Prefer back'}>
                   {constraint.type === 'prefer_front' ? <FrontIcon /> : <BackIcon />}
