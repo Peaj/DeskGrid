@@ -21,7 +21,15 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function areSeatsDirectlyAdjacent(seatA: Seat, seatB: Seat): boolean {
+  const deltaX = Math.abs(seatA.x - seatB.x);
+  const deltaY = Math.abs(seatA.y - seatB.y);
+  return deltaX <= 1 && deltaY <= 1 && (deltaX !== 0 || deltaY !== 0);
+}
+
 function buildPairArcPath(
+  seatA: Seat,
+  seatB: Seat,
   from: { x: number; y: number },
   to: { x: number; y: number },
   width: number,
@@ -33,6 +41,10 @@ function buildPairArcPath(
   const distance = Math.hypot(dx, dy);
 
   if (distance < 1) {
+    return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+  }
+
+  if (areSeatsDirectlyAdjacent(seatA, seatB)) {
     return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   }
 
@@ -84,7 +96,7 @@ export function ConstraintOverlay({
         const from = seatCenter(seatA, cellSize);
         const to = seatCenter(seatB, cellSize);
         const className = constraint.type === 'must_next_to' ? 'pair-next' : 'pair-not-next';
-        const path = buildPairArcPath(from, to, width, height, cellSize);
+        const path = buildPairArcPath(seatA, seatB, from, to, width, height, cellSize);
 
         return (
           <g key={constraint.id}>
