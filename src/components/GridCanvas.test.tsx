@@ -182,6 +182,61 @@ describe('GridCanvas', () => {
     expect(getByText('Delete')).toBeInTheDocument();
   });
 
+  it('does not show delete hover for a newly painted seat until the paint stroke ends', () => {
+    const onToggleSeat = vi.fn();
+
+    const { container, rerender, queryByText } = render(
+      <GridCanvas
+        activeLayer="layout"
+        grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
+        seats={[]}
+        students={[]}
+        assignments={[]}
+        pairConstraints={[]}
+        positionConstraints={[]}
+        onToggleSeat={onToggleSeat}
+        onAddPairConstraint={vi.fn()}
+        onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
+      />,
+    );
+
+    const canvas = container.querySelector('.grid-canvas');
+    expect(canvas).not.toBeNull();
+
+    fireEvent.pointerDown(canvas as HTMLElement, { clientX: 20, clientY: 20, button: 0 });
+
+    rerender(
+      <GridCanvas
+        activeLayer="layout"
+        grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
+        seats={[{ id: 'seat-a', x: 0, y: 0 }]}
+        students={[]}
+        assignments={[]}
+        pairConstraints={[]}
+        positionConstraints={[]}
+        onToggleSeat={onToggleSeat}
+        onAddPairConstraint={vi.fn()}
+        onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('.layout-delete-hover')).toBeNull();
+    expect(queryByText('Delete')).toBeNull();
+
+    fireEvent.pointerUp(canvas as HTMLElement);
+    fireEvent.pointerMove(canvas as HTMLElement, { clientX: 20, clientY: 20 });
+
+    expect(container.querySelector('.layout-delete-hover')).toBeInTheDocument();
+  });
+
   it('shows pair rule chooser in a popup portal anchored to the canvas', () => {
     const onAddPairConstraint = vi.fn();
 

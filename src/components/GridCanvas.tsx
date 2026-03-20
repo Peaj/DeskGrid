@@ -518,7 +518,8 @@ export function GridCanvas({
             const isSourceSeat = activeDrag?.sourceSeatId === seat.id;
             const isSeatDropTarget =
               isDraggingStudent && dragHover.studentId === null && dragHover.seatId === seat.id && !isSourceSeat;
-            const isLayoutDeleteHover = activeLayer === 'layout' && hoveredSeatKey === `${seat.x},${seat.y}`;
+            const isLayoutDeleteHover =
+              activeLayer === 'layout' && paintMode !== 'add' && hoveredSeatKey === `${seat.x},${seat.y}`;
 
             return (
               <div key={seat.id}>
