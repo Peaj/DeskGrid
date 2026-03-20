@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  clearLocalStorageProject,
+  loadLayoutFromLocalStorage,
+  loadRosterFromLocalStorage,
+  saveLayoutToLocalStorage,
+  saveRosterToLocalStorage,
   parseLayoutFromJson,
   parseRosterFromJson,
   serializeLayout,
@@ -24,5 +29,28 @@ describe('persistence schema', () => {
 
     expect(parseLayoutFromJson(serializeLayout(layout))).toEqual(layout);
     expect(parseRosterFromJson(serializeRoster(roster))).toEqual(roster);
+  });
+
+  it('clears the saved local project without changing storage keys', () => {
+    saveLayoutToLocalStorage({
+      schemaVersion: 2,
+      grid: { width: 12, height: 9, frontEdge: 'bottom' },
+      seats: [{ id: 'seat:2,2', x: 2, y: 2 }],
+    });
+
+    saveRosterToLocalStorage({
+      schemaVersion: 1,
+      students: [{ id: 's-1', name: 'Ada' }],
+      pairConstraints: [],
+      positionConstraints: [],
+      assignments: [],
+    });
+
+    clearLocalStorageProject();
+
+    expect(loadLayoutFromLocalStorage()).toBeNull();
+    expect(loadRosterFromLocalStorage()).toBeNull();
+    expect(window.localStorage.getItem('deskgrid.layout.current')).toBeNull();
+    expect(window.localStorage.getItem('deskgrid.roster.current')).toBeNull();
   });
 });

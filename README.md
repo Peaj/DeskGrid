@@ -47,3 +47,12 @@ npm run version:patch
 npm run version:minor
 npm run version:major
 ```
+
+## Privacy
+
+DeskGrid is local-first by design. Student names, seating plans, constraints, and assignments stay in the browser on the teacher's device and are not uploaded by the app.
+
+- Project data is stored locally in this browser via `localStorage`.
+- Users can export `layout.json` and `roster.json` files or clear local data at any time.
+- The app does not use analytics, tracking, or cloud sync.
+- Future features must not introduce remote data upload or third-party tracking without revisiting the privacy model.

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useDeskGridStore } from './useDeskGridStore';
 
 beforeEach(() => {
+  window.localStorage.clear();
   useDeskGridStore.setState({
     grid: { width: 14, height: 10, frontEdge: 'bottom' },
     seats: [],

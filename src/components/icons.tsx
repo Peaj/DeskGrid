@@ -11,6 +11,7 @@ import {
   MdLink,
   MdSwapHoriz,
   MdRemove,
+  MdShield,
   MdUploadFile,
   MdWarningAmber,
   MdCreateNewFolder,
@@ -49,3 +50,4 @@ export const CheckIcon = withDefaultClass(MdCheckCircle);
 export const CrossIcon = withDefaultClass(MdCancel);
 export const MinusIcon = withDefaultClass(MdRemove);
 export const CloseIcon = withDefaultClass(MdClose);
+export const PrivacyIcon = withDefaultClass(MdShield);

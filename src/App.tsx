@@ -97,6 +97,8 @@ export default function App() {
         onSaveLocal={saveProjectLocal}
         onLoadLocal={loadProjectLocal}
         onClearLocal={clearProjectLocal}
+        onExportLayout={exportLayoutFile}
+        onExportRoster={exportRosterFile}
       />
 
       <section className="mt-3">

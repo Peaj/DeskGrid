@@ -43,6 +43,70 @@ const defaultScore: ScoreBreakdown = {
   totalPenalty: 0,
 };
 
+function createDefaultState(): Pick<
+  DeskGridState,
+  | 'grid'
+  | 'seats'
+  | 'students'
+  | 'pairConstraints'
+  | 'positionConstraints'
+  | 'assignments'
+  | 'unassignedStudentIds'
+  | 'hardViolations'
+  | 'scoreBreakdown'
+  | 'notices'
+> {
+  return {
+    grid: defaultGrid,
+    seats: [],
+    students: [],
+    pairConstraints: [],
+    positionConstraints: [],
+    assignments: [],
+    unassignedStudentIds: [],
+    hardViolations: [],
+    scoreBreakdown: defaultScore,
+    notices: [],
+  };
+}
+
+function createHydratedState(notices: string[] = []): Pick<
+  DeskGridState,
+  | 'grid'
+  | 'seats'
+  | 'students'
+  | 'pairConstraints'
+  | 'positionConstraints'
+  | 'assignments'
+  | 'unassignedStudentIds'
+  | 'hardViolations'
+  | 'scoreBreakdown'
+  | 'notices'
+> {
+  const layout = loadLayoutFromLocalStorage();
+  const roster = loadRosterFromLocalStorage();
+
+  const grid = layout?.grid ?? defaultGrid;
+  const seats = layout?.seats ?? [];
+  const students = roster?.students ?? [];
+  const pairConstraints = roster?.pairConstraints ?? [];
+  const positionConstraints = roster?.positionConstraints ?? [];
+  const assignments = cleanupAssignments(roster?.assignments ?? [], seats);
+
+  return {
+    grid,
+    seats,
+    students,
+    pairConstraints,
+    positionConstraints,
+    assignments,
+    unassignedStudentIds: computeUnassigned(students, assignments),
+    hardViolations: [],
+    scoreBreakdown: defaultScore,
+    notices,
+  };
+}
+
 function withProjectPersistence(state: DeskGridState): void {
   const layout: LayoutFile = {
     schemaVersion: SCHEMA_VERSION,
@@ -127,30 +191,10 @@ interface DeskGridState {
 }
 
 export const useDeskGridStore = create<DeskGridState>((set, get) => ({
-  grid: defaultGrid,
-  seats: [],
-  students: [],
-  pairConstraints: [],
-  positionConstraints: [],
-  assignments: [],
-  unassignedStudentIds: [],
-  hardViolations: [],
-  scoreBreakdown: defaultScore,
-  notices: [],
+  ...createHydratedState(),
 
   resetProject: () => {
-    set({
-      grid: defaultGrid,
-      seats: [],
-      students: [],
-      pairConstraints: [],
-      positionConstraints: [],
-      assignments: [],
-      unassignedStudentIds: [],
-      hardViolations: [],
-      scoreBreakdown: defaultScore,
-      notices: ['Started a new project.'],
-    });
+    set({ ...createDefaultState(), notices: ['Started a new project.'] });
     withProjectPersistence(get());
   },
 
@@ -380,25 +424,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const layout = loadLayoutFromLocalStorage();
     const roster = loadRosterFromLocalStorage();
 
-    if (!layout || !roster) {
+    if (!layout && !roster) {
       set({ notices: ['No valid local project found.'] });
       return;
     }
 
-    const assignments = cleanupAssignments(roster.assignments, layout.seats);
-
-    set({
-      grid: layout.grid,
-      seats: layout.seats,
-      students: roster.students,
-      pairConstraints: roster.pairConstraints,
-      positionConstraints: roster.positionConstraints,
-      assignments,
-      unassignedStudentIds: computeUnassigned(roster.students, assignments),
-      hardViolations: [],
-      scoreBreakdown: defaultScore,
-      notices: ['Loaded project from local storage.'],
-    });
+    set(createHydratedState(['Loaded project from local storage.']));
   },
 
   clearProjectLocal: () => {
@@ -470,4 +501,9 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
 export const deskGridDefaults = {
   defaultGrid,
+};
+
+export const deskGridStateFactories = {
+  createDefaultState,
+  createHydratedState,
 };
