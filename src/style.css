@@ -501,6 +501,20 @@
     color: rgba(255, 255, 255, 0.76);
   }
 
+  .layout-delete-hover {
+    border-color: rgba(220, 38, 38, 0.78);
+    background: linear-gradient(165deg, rgba(249, 115, 115, 0.78), rgba(220, 38, 38, 0.72));
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+      0 0 0 2px rgba(248, 113, 113, 0.18);
+  }
+
+  .layout-delete-hover .seat-empty {
+    border-color: rgba(255, 245, 245, 0.86);
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 250, 250, 0.96);
+  }
+
   .student-layer-seat {
     border-color: rgba(38, 97, 131, 0.42);
     background: linear-gradient(165deg, rgba(88, 154, 191, 0.58), rgba(47, 114, 156, 0.54));

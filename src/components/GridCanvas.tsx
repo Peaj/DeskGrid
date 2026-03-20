@@ -112,6 +112,7 @@ export function GridCanvas({
   const seatById = useMemo(() => new Map(seats.map((seat) => [seat.id, seat])), [seats]);
   const seatByCoord = useMemo(() => new Map(seats.map((seat) => [`${seat.x},${seat.y}`, seat])), [seats]);
   const occupiedCells = useMemo(() => new Set(seats.map((seat) => `${seat.x},${seat.y}`)), [seats]);
+  const hoveredSeatKey = layoutHoverCell ? `${layoutHoverCell.x},${layoutHoverCell.y}` : null;
 
   const gridWidth = grid.width * cellSize;
   const gridHeight = grid.height * cellSize;
@@ -517,6 +518,7 @@ export function GridCanvas({
             const isSourceSeat = activeDrag?.sourceSeatId === seat.id;
             const isSeatDropTarget =
               isDraggingStudent && dragHover.studentId === null && dragHover.seatId === seat.id && !isSourceSeat;
+            const isLayoutDeleteHover = activeLayer === 'layout' && hoveredSeatKey === `${seat.x},${seat.y}`;
 
             return (
               <div key={seat.id}>
@@ -525,10 +527,10 @@ export function GridCanvas({
                     isSourceSeat ? 'drag-source-seat' : ''
                   } ${
                     isDraggingStudent ? 'drop-seat-candidate' : ''
-                  } ${isSeatDropTarget ? 'drop-seat-hover' : ''}`}
+                  } ${isSeatDropTarget ? 'drop-seat-hover' : ''} ${isLayoutDeleteHover ? 'layout-delete-hover' : ''}`}
                   style={{ left: seat.x * cellSize, top: seat.y * cellSize }}
                 >
-                  {studentForLayer ? null : <span className="seat-empty">Seat</span>}
+                  {studentForLayer ? null : <span className="seat-empty">{isLayoutDeleteHover ? 'Delete' : 'Seat'}</span>}
                 </div>
 
                 {studentForLayer ? (
