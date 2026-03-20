@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8F2E5" />
+      <stop offset="1" stop-color="#E7EFF6" />
+    </linearGradient>
+    <linearGradient id="desk" x1="18" y1="14" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4E89B6" />
+      <stop offset="1" stop-color="#245E88" />
+    </linearGradient>
+    <linearGradient id="seat" x1="24" y1="40" x2="40" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F3C76C" />
+      <stop offset="1" stop-color="#D59721" />
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#bg)" />
+  <path
+    d="M17 18C17 14.6863 19.6863 12 23 12H41C44.3137 12 47 14.6863 47 18V31C47 34.3137 44.3137 37 41 37H23C19.6863 37 17 34.3137 17 31V18Z"
+    fill="url(#desk)"
+  />
+  <rect x="21" y="17" width="22" height="7" rx="3.5" fill="white" fill-opacity="0.28" />
+  <rect x="17" y="35" width="8" height="14" rx="4" fill="#2E6E99" />
+  <rect x="39" y="35" width="8" height="14" rx="4" fill="#2E6E99" />
+  <rect x="24" y="41" width="16" height="9" rx="4.5" fill="url(#seat)" />
+  <circle cx="32" cy="45.5" r="1.6" fill="#FFF8EA" />
+</svg>
