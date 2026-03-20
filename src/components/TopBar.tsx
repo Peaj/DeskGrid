@@ -3,6 +3,7 @@ import { ExportIcon, LoadIcon, NewProjectIcon, PrivacyIcon, SaveIcon, TrashIcon 
 
 interface TopBarProps {
   appVersion: string;
+  repoUrl: string;
   onNewProject: () => void;
   onSaveLocal: () => void;
   onLoadLocal: () => void;
@@ -13,6 +14,7 @@ interface TopBarProps {
 
 export function TopBar({
   appVersion,
+  repoUrl,
   onNewProject,
   onSaveLocal,
   onLoadLocal,
@@ -59,14 +61,26 @@ export function TopBar({
     menuRef.current?.removeAttribute('open');
   }
 
+  const versionBadge = repoUrl ? (
+    <a
+      className="version-pill version-pill-link"
+      href={repoUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Open the DeskGrid GitHub repository (version ${appVersion})`}
+    >
+      v{appVersion}
+    </a>
+  ) : (
+    <span className="version-pill">v{appVersion}</span>
+  );
+
   return (
     <header className="app-bar">
       <div className="flex flex-wrap items-center gap-2">
         <div className="mr-auto flex flex-wrap items-center gap-2">
           <h1 className="text-base font-semibold uppercase tracking-[0.08em] text-slate-800">DeskGrid</h1>
-          <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-            v{appVersion}
-          </span>
+          {versionBadge}
           <span className="privacy-pill">
             <PrivacyIcon />
             <span>All data stays on your device</span>
@@ -89,6 +103,15 @@ export function TopBar({
                 DeskGrid runs entirely in your browser. Student data, seating plans, constraints, and assignments
                 are stored locally in this browser via <code>localStorage</code>.
               </p>
+              {repoUrl ? (
+                <p className="privacy-panel-note">
+                  DeskGrid is open source on{' '}
+                  <a href={repoUrl} target="_blank" rel="noreferrer">
+                    GitHub
+                  </a>
+                  .
+                </p>
+              ) : null}
               <ul className="privacy-panel-list">
                 <li>No account required</li>
                 <li>No cloud sync</li>

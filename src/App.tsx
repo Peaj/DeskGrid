@@ -15,6 +15,7 @@ async function readFileText(file: File): Promise<string> {
 
 export default function App() {
   const appVersion = __APP_VERSION__;
+  const repoUrl = __REPO_URL__;
   const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
   const [gridShellWidth, setGridShellWidth] = useState(0);
   const [hoveredConstraintId, setHoveredConstraintId] = useState<string | null>(null);
@@ -93,6 +94,7 @@ export default function App() {
     <div className="relative isolate min-h-screen p-3 md:p-4">
       <TopBar
         appVersion={appVersion}
+        repoUrl={repoUrl}
         onNewProject={resetProject}
         onSaveLocal={saveProjectLocal}
         onLoadLocal={loadProjectLocal}

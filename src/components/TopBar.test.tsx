@@ -11,6 +11,7 @@ describe('TopBar privacy messaging', () => {
     render(
       <TopBar
         appVersion="0.4.0"
+        repoUrl="https://github.com/Peaj/DeskGrid"
         onNewProject={vi.fn()}
         onSaveLocal={vi.fn()}
         onLoadLocal={vi.fn()}
@@ -21,10 +22,15 @@ describe('TopBar privacy messaging', () => {
     );
 
     expect(screen.getAllByText('All data stays on your device')[0]).toBeVisible();
+    expect(screen.getByRole('link', { name: /open the deskgrid github repository/i })).toHaveAttribute(
+      'href',
+      'https://github.com/Peaj/DeskGrid',
+    );
 
     await user.click(screen.getByText('Privacy', { selector: 'summary' }));
 
     expect(screen.getByText(/DeskGrid runs entirely in your browser\./)).toBeVisible();
+    expect(screen.getByText(/DeskGrid is open source on/i)).toBeVisible();
     expect(screen.getByText(/stored locally in this browser via/i)).toBeVisible();
     expect(screen.getByText('No analytics or tracking')).toBeVisible();
     expect(screen.getByText('Export layout.json')).toBeVisible();

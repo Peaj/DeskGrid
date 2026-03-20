@@ -6,6 +6,27 @@ The format is based on Keep a Changelog, and this project uses Semantic Versioni
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-21
+
+### Added
+
+- A persistent privacy message in the header stating that all data stays on the user's device.
+- A dedicated `Privacy` popover explaining local browser storage, the lack of accounts/cloud sync/tracking, and quick actions for local save/load/export/clear.
+- GitHub repository links from the version badge and the privacy popover to make the app's open source status visible.
+- Privacy-focused tests covering the top bar messaging, local-project clearing, and static guardrails against remote font/tracking integrations.
+
+### Changed
+
+- The top header now uses a cleaner borderless layout and the version badge opens the project repository.
+- `Plus Jakarta Sans` is now self-hosted inside the app instead of loading from Google Fonts.
+- Content Security Policy handling now happens during production builds so the deployed app keeps stricter browser restrictions without interfering with local Vite development.
+- README privacy documentation now explicitly describes the local-first storage model and future privacy constraints.
+
+### Fixed
+
+- Vite local development no longer loses its HMR/server connection because of CSP blocking dev-time `blob:` workers.
+- The app no longer makes third-party Google Fonts requests at runtime, keeping classroom-data sessions consistent with the local-first privacy story.
+
 ## [0.4.0] - 2026-03-20
 
 ### Added
