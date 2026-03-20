@@ -128,7 +128,7 @@
   }
 
   .app-bar {
-    @apply relative z-[120] overflow-visible rounded-lg border border-slate-300/80 bg-white/90 px-3 py-2 shadow-soft backdrop-blur-sm;
+    @apply relative z-[120] overflow-visible px-1 py-1;
   }
 
   .app-menu {
