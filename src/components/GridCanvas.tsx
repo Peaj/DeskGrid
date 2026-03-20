@@ -73,6 +73,11 @@ interface BenchDragStartEventDetail {
   tokenHeight: number;
 }
 
+interface GridCellHover {
+  x: number;
+  y: number;
+}
+
 export function GridCanvas({
   activeLayer,
   grid,
@@ -94,6 +99,7 @@ export function GridCanvas({
   const [pendingPairPosition, setPendingPairPosition] = useState<PendingPairPosition | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveStudentDrag | null>(null);
   const [dragHover, setDragHover] = useState<DragHoverTarget>({ seatId: null, studentId: null });
+  const [layoutHoverCell, setLayoutHoverCell] = useState<GridCellHover | null>(null);
   const [paintMode, setPaintMode] = useState<'add' | 'remove' | null>(null);
   const [cellSize, setCellSize] = useState(DEFAULT_CELL_SIZE);
   const panelRef = useRef<HTMLElement>(null);
@@ -440,9 +446,15 @@ export function GridCanvas({
             paintedCellsRef.current.clear();
             paintSeatCell(cell, startMode);
             setPaintMode(startMode);
+            setLayoutHoverCell(cell);
           }}
           onPointerMove={(event) => {
-            if (activeLayer !== 'layout' || !paintMode) {
+            if (activeLayer !== 'layout') {
+              return;
+            }
+            const cell = toGridCell(event.clientX, event.clientY);
+            setLayoutHoverCell(cell);
+            if (!paintMode) {
               return;
             }
             if ((event.buttons & 1) !== 1) {
@@ -450,7 +462,6 @@ export function GridCanvas({
               paintedCellsRef.current.clear();
               return;
             }
-            const cell = toGridCell(event.clientX, event.clientY);
             if (!cell) {
               return;
             }
@@ -460,12 +471,23 @@ export function GridCanvas({
             setPaintMode(null);
             paintedCellsRef.current.clear();
           }}
+          onPointerLeave={() => {
+            if (activeLayer === 'layout') {
+              setLayoutHoverCell(null);
+            }
+          }}
         >
           <div className="grid-cells" style={{ gridTemplateColumns: `repeat(${grid.width}, ${cellSize}px)` }}>
             {Array.from({ length: grid.width * grid.height }).map((_, index) => (
               <div key={index} className="grid-cell" />
             ))}
           </div>
+
+          {activeLayer === 'layout' && layoutHoverCell && !occupiedCells.has(`${layoutHoverCell.x},${layoutHoverCell.y}`) && (
+            <div className="seat-spot ghost-seat" style={{ left: layoutHoverCell.x * cellSize, top: layoutHoverCell.y * cellSize }}>
+              <span className="seat-empty">Seat</span>
+            </div>
+          )}
 
           {activeLayer === 'student' && (
             <>

@@ -121,6 +121,38 @@ describe('GridCanvas', () => {
     expect(onToggleSeat).toHaveBeenCalledTimes(3);
   });
 
+  it('shows a ghost seat preview while hovering an empty cell in layout layer', () => {
+    const { container } = render(
+      <GridCanvas
+        activeLayer="layout"
+        grid={{ width: 6, height: 6, frontEdge: 'bottom' }}
+        seats={[]}
+        students={[]}
+        assignments={[]}
+        pairConstraints={[]}
+        positionConstraints={[]}
+        onToggleSeat={vi.fn()}
+        onAddPairConstraint={vi.fn()}
+        onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
+      />,
+    );
+
+    const canvas = container.querySelector('.grid-canvas');
+    expect(canvas).not.toBeNull();
+
+    fireEvent.pointerMove(canvas as HTMLElement, { clientX: 20, clientY: 20 });
+
+    expect(container.querySelector('.ghost-seat')).toBeInTheDocument();
+
+    fireEvent.pointerLeave(canvas as HTMLElement);
+
+    expect(container.querySelector('.ghost-seat')).toBeNull();
+  });
+
   it('shows pair rule chooser in a popup portal anchored to the canvas', () => {
     const onAddPairConstraint = vi.fn();
 
