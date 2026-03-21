@@ -490,25 +490,23 @@ export function GridCanvas({
             </div>
           )}
 
+          <div className="drop-anchor back-anchor">Back</div>
+
+          <div className="drop-anchor front-anchor">Front</div>
+
           {activeLayer === 'student' && (
-            <>
-              <div className="drop-anchor back-anchor">Back</div>
-
-              <div className="drop-anchor front-anchor">Front</div>
-
-              <ConstraintOverlay
-                width={gridWidth}
-                height={gridHeight}
-                cellSize={cellSize}
-                seats={seats}
-                assignments={assignments}
-                pairConstraints={pairConstraints}
-                positionConstraints={positionConstraints}
-                hoveredConstraintId={hoveredConstraintId}
-                onHoveredConstraintChange={onHoveredConstraintChange}
-                interactionEnabled={!isDraggingStudent && !pendingPair}
-              />
-            </>
+            <ConstraintOverlay
+              width={gridWidth}
+              height={gridHeight}
+              cellSize={cellSize}
+              seats={seats}
+              assignments={assignments}
+              pairConstraints={pairConstraints}
+              positionConstraints={positionConstraints}
+              hoveredConstraintId={hoveredConstraintId}
+              onHoveredConstraintChange={onHoveredConstraintChange}
+              interactionEnabled={!isDraggingStudent && !pendingPair}
+            />
           )}
 
           {seats.map((seat) => {
@@ -585,7 +583,7 @@ export function GridCanvas({
           {activeLayer === 'layout' ? (
             <>
               <span>Click or drag with mouse down to paint seats on/off.</span>
-              <span>Use this layer to design the base seat layout.</span>
+              <span>Use the front/back zones to orient the room while placing seats.</span>
             </>
           ) : (
             <>

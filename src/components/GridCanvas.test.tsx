@@ -88,6 +88,30 @@ describe('GridCanvas', () => {
     expect(container.querySelector('.seat-empty')).toBeInTheDocument();
   });
 
+  it('shows front and back zones on the layout layer', () => {
+    render(
+      <GridCanvas
+        activeLayer="layout"
+        grid={{ width: 4, height: 2, frontEdge: 'bottom' }}
+        seats={[]}
+        students={[]}
+        assignments={[]}
+        pairConstraints={[]}
+        positionConstraints={[]}
+        onToggleSeat={vi.fn()}
+        onAddPairConstraint={vi.fn()}
+        onAddPositionConstraint={vi.fn()}
+        onMoveStudentToSeat={vi.fn()}
+        onUnassignStudent={vi.fn()}
+        hoveredConstraintId={null}
+        onHoveredConstraintChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Back')).toBeVisible();
+    expect(screen.getByText('Front')).toBeVisible();
+  });
+
   it('paints multiple seats while dragging in layout layer', () => {
     const onToggleSeat = vi.fn();
 
