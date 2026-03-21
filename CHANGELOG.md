@@ -6,6 +6,26 @@ The format is based on Keep a Changelog, and this project uses Semantic Versioni
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-21
+
+### Added
+
+- A dedicated Desk Layer sidebar with layout stats and a `Next Step` panel so both workspace tabs keep a consistent two-column structure.
+- Active layer persistence via URL hash and local storage, including direct links to `#layout` and `#student`.
+- A folder icon on the `Project` menu trigger for clearer top-bar navigation.
+
+### Changed
+
+- Reworked the workspace layout so the grid and sidebar stay aligned more consistently across narrow, medium, and very wide window sizes.
+- Refined the layer tab and workspace shell styling so the active tab reads as part of the panel with a stronger shared outline and cleaner overlap.
+- Restyled the grid board to feel inset into the workspace instead of floating above it, using softer neutral tones and inner depth.
+
+### Fixed
+
+- Grid scaling now preserves seat and student-chip proportions more reliably by using cell-size-relative spacing and insets instead of fixed pixel offsets.
+- Wide-screen workspace sizing no longer shrinks the grid after reaching the desktop layout limit.
+- The active workspace layer now restores correctly after reloads and responds to browser hash navigation.
+
 ## [0.5.0] - 2026-03-21
 
 ### Added
