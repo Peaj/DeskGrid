@@ -177,6 +177,22 @@ function buildProjectFile(state: Pick<
   };
 }
 
+function parseLayoutOrProjectJson(text: string): LayoutFile {
+  try {
+    return parseLayoutFromJson(text);
+  } catch {
+    return parseProjectFromJson(text).layout;
+  }
+}
+
+function parseRosterOrProjectJson(text: string): RosterFile {
+  try {
+    return parseRosterFromJson(text);
+  } catch {
+    return parseProjectFromJson(text).roster;
+  }
+}
+
 interface DeskGridState {
   grid: GridConfig;
   seats: Seat[];
@@ -479,7 +495,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   importLayoutJson: (text) => {
     const state = get();
     try {
-      const layout = parseLayoutFromJson(text);
+      const layout = parseLayoutOrProjectJson(text);
       const assignments = cleanupAssignments(state.assignments, layout.seats);
       set({
         grid: layout.grid,
@@ -498,7 +514,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   importRosterJson: (text) => {
     const state = get();
     try {
-      const roster = parseRosterFromJson(text);
+      const roster = parseRosterOrProjectJson(text);
       const assignments = cleanupAssignments(roster.assignments, state.seats);
       set({
         students: roster.students,

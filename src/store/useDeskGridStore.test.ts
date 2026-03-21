@@ -155,4 +155,66 @@ describe('DeskGrid store', () => {
     expect(window.localStorage.getItem('deskgrid.layout.current')).toBeNull();
     expect(window.localStorage.getItem('deskgrid.roster.current')).toBeNull();
   });
+
+  it('imports the layout section when loading a full project file through load layout', () => {
+    useDeskGridStore.setState({
+      students: [{ id: 's1', name: 'A' }],
+      assignments: [{ seatId: 'seat:9,9', studentId: 's1' }],
+    });
+
+    useDeskGridStore.getState().importLayoutJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        layout: {
+          schemaVersion: 2,
+          grid: { width: 8, height: 6, frontEdge: 'bottom' },
+          seats: [{ id: 'seat:1,1', x: 1, y: 1 }],
+        },
+        roster: {
+          schemaVersion: 1,
+          students: [{ id: 's1', name: 'A' }],
+          pairConstraints: [],
+          positionConstraints: [],
+          assignments: [{ seatId: 'seat:1,1', studentId: 's1' }],
+        },
+      }),
+    );
+
+    const next = useDeskGridStore.getState();
+    expect(next.grid).toEqual({ width: 8, height: 6, frontEdge: 'bottom' });
+    expect(next.seats).toEqual([{ id: 'seat:1,1', x: 1, y: 1 }]);
+    expect(next.assignments).toEqual([]);
+    expect(next.notices).toEqual(['Imported layout.']);
+  });
+
+  it('imports the roster section when loading a full project file through load roster', () => {
+    useDeskGridStore.setState({
+      seats: [{ id: 'seat:2,2', x: 2, y: 2 }],
+    });
+
+    useDeskGridStore.getState().importRosterJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        layout: {
+          schemaVersion: 2,
+          grid: { width: 10, height: 8, frontEdge: 'bottom' },
+          seats: [{ id: 'seat:2,2', x: 2, y: 2 }],
+        },
+        roster: {
+          schemaVersion: 1,
+          students: [{ id: 's2', name: 'B' }],
+          pairConstraints: [],
+          positionConstraints: [{ id: 'pos-1', studentId: 's2', type: 'prefer_front', hard: false }],
+          assignments: [{ seatId: 'seat:2,2', studentId: 's2' }],
+        },
+      }),
+    );
+
+    const next = useDeskGridStore.getState();
+    expect(next.students).toEqual([{ id: 's2', name: 'B' }]);
+    expect(next.positionConstraints).toEqual([{ id: 'pos-1', studentId: 's2', type: 'prefer_front', hard: false }]);
+    expect(next.assignments).toEqual([{ seatId: 'seat:2,2', studentId: 's2' }]);
+    expect(next.unassignedStudentIds).toEqual([]);
+    expect(next.notices).toEqual(['Imported roster.']);
+  });
 });
