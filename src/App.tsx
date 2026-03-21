@@ -5,6 +5,7 @@ import type { GridLayer } from './components/GridCanvas';
 import { SolveControls } from './components/SolveControls';
 import { StudentBench } from './components/StudentBench';
 import { TopBar } from './components/TopBar';
+import { ToastStack } from './components/ToastStack';
 import { Toolbar } from './components/Toolbar';
 import { ImportIcon, LoadIcon, SaveIcon } from './components/icons';
 import { useDeskGridStore } from './store/useDeskGridStore';
@@ -247,19 +248,7 @@ export default function App() {
         }}
       />
 
-      <section className="mt-3 flex flex-wrap gap-2" aria-live="polite">
-        {notices.map((notice, index) => (
-          <div
-            key={`${notice}-${index}`}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white/95 px-3 py-1.5 text-sm text-slate-700 shadow-sm"
-          >
-            <span>{notice}</span>
-            <button className="ui-btn px-2 py-0.5 text-xs" onClick={() => removeNotice(index)} aria-label="Dismiss message">
-              x
-            </button>
-          </div>
-        ))}
-      </section>
+      <ToastStack notices={notices} onDismiss={removeNotice} />
     </div>
   );
 }

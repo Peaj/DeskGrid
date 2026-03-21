@@ -47,6 +47,22 @@ const defaultScore: ScoreBreakdown = {
   totalPenalty: 0,
 };
 
+export interface Notice {
+  id: string;
+  message: string;
+}
+
+function createNotice(message: string): Notice {
+  return {
+    id: createId('notice'),
+    message,
+  };
+}
+
+function createNotices(messages: string[]): Notice[] {
+  return messages.map((message) => createNotice(message));
+}
+
 function createDefaultState(): Pick<
   DeskGridState,
   | 'grid'
@@ -107,7 +123,7 @@ function createHydratedState(notices: string[] = []): Pick<
     unassignedStudentIds: computeUnassigned(students, assignments),
     hardViolations: [],
     scoreBreakdown: defaultScore,
-    notices,
+    notices: createNotices(notices),
   };
 }
 
@@ -203,7 +219,7 @@ interface DeskGridState {
   unassignedStudentIds: string[];
   hardViolations: HardViolation[];
   scoreBreakdown: ScoreBreakdown;
-  notices: string[];
+  notices: Notice[];
 
   resetProject: () => void;
   toggleSeat: (x: number, y: number) => void;
@@ -217,7 +233,7 @@ interface DeskGridState {
   addPositionConstraint: (studentId: string, type: PositionConstraintType) => void;
   removePairConstraint: (constraintId: string) => void;
   removePositionConstraint: (constraintId: string) => void;
-  removeNotice: (index: number) => void;
+  removeNotice: (id: string) => void;
   clearProjectLocal: () => void;
   exportProjectFile: () => Promise<void>;
   importProjectJson: (text: string) => void;
@@ -232,7 +248,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   resetProject: () => {
     clearLocalStorageProject();
-    set({ ...createDefaultState(), notices: ['Started a new project.'] });
+    set({ ...createDefaultState(), notices: createNotices(['Started a new project.']) });
   },
 
   toggleSeat: (x, y) => {
@@ -257,12 +273,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         students: result.students,
         assignments: [],
         unassignedStudentIds: result.students.map((student) => student.id),
-        notices: result.warnings.length > 0 ? result.warnings.slice(0, 5) : ['Imported students.'],
+        notices: createNotices(result.warnings.length > 0 ? result.warnings.slice(0, 5) : ['Imported students.']),
       });
       withProjectPersistence(get());
     } catch (error) {
       const message = error instanceof Error ? error.message : 'CSV import failed.';
-      set({ notices: [message, ...state.notices].slice(0, 5) });
+      set({ notices: createNotices([message, ...state.notices.map((notice) => notice.message)].slice(0, 5)) });
     }
   },
 
@@ -274,7 +290,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       unassignedStudentIds: random.unassignedStudentIds,
       hardViolations: [],
       scoreBreakdown: defaultScore,
-      notices: ['Random assignment generated.'],
+      notices: createNotices(['Random assignment generated.']),
     });
     withProjectPersistence(get());
   },
@@ -286,7 +302,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       unassignedStudentIds: state.students.map((student) => student.id),
       hardViolations: [],
       scoreBreakdown: defaultScore,
-      notices: ['All students moved back to the bench.'],
+      notices: createNotices(['All students moved back to the bench.']),
     });
     withProjectPersistence(get());
   },
@@ -310,8 +326,8 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       unassignedStudentIds: result.unassignedStudentIds,
       notices:
         result.hardViolations.length > 0
-          ? [`Solved with ${result.hardViolations.length} hard constraint conflict(s).`]
-          : ['Solved seating plan.'],
+          ? createNotices([`Solved with ${result.hardViolations.length} hard constraint conflict(s).`])
+          : createNotices(['Solved seating plan.']),
     });
     withProjectPersistence(get());
   },
@@ -410,7 +426,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       ? state.pairConstraints.map((constraint) => (constraint.id === existing.id ? nextConstraint : constraint))
       : [...state.pairConstraints, nextConstraint];
 
-    set({ pairConstraints, notices: ['Pair constraint updated.'] });
+    set({ pairConstraints, notices: createNotices(['Pair constraint updated.']) });
     withProjectPersistence(get());
   },
 
@@ -426,7 +442,7 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
     set({
       positionConstraints: [...filtered, next],
-      notices: ['Position preference updated.'],
+      notices: createNotices(['Position preference updated.']),
     });
     withProjectPersistence(get());
   },
@@ -447,14 +463,14 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     withProjectPersistence(get());
   },
 
-  removeNotice: (index) => {
+  removeNotice: (id) => {
     const state = get();
-    set({ notices: state.notices.filter((_, noticeIndex) => noticeIndex !== index) });
+    set({ notices: state.notices.filter((notice) => notice.id !== id) });
   },
 
   clearProjectLocal: () => {
     clearLocalStorageProject();
-    set({ notices: ['Local storage cleared.'] });
+    set({ notices: createNotices(['Local storage cleared.']) });
   },
 
   exportProjectFile: async () => {
@@ -475,12 +491,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         unassignedStudentIds: computeUnassigned(project.roster.students, assignments),
         hardViolations: [],
         scoreBreakdown: defaultScore,
-        notices: ['Imported project.'],
+        notices: createNotices(['Imported project.']),
       });
       withProjectPersistence(get());
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Project import failed.';
-      set({ notices: [message] });
+      set({ notices: createNotices([message]) });
     }
   },
 
@@ -502,12 +518,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         seats: layout.seats,
         assignments,
         unassignedStudentIds: computeUnassigned(state.students, assignments),
-        notices: ['Imported layout.'],
+        notices: createNotices(['Imported layout.']),
       });
       withProjectPersistence(get());
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Layout import failed.';
-      set({ notices: [message] });
+      set({ notices: createNotices([message]) });
     }
   },
 
@@ -522,12 +538,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         positionConstraints: roster.positionConstraints,
         assignments,
         unassignedStudentIds: computeUnassigned(roster.students, assignments),
-        notices: ['Imported roster.'],
+        notices: createNotices(['Imported roster.']),
       });
       withProjectPersistence(get());
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Roster import failed.';
-      set({ notices: [message] });
+      set({ notices: createNotices([message]) });
     }
   },
 }));

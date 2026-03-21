@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useDeskGridStore } from './useDeskGridStore';
 
+function noticeMessages(): string[] {
+  return useDeskGridStore.getState().notices.map((notice) => notice.message);
+}
+
 beforeEach(() => {
   window.localStorage.clear();
   useDeskGridStore.setState({
@@ -151,7 +155,7 @@ describe('DeskGrid store', () => {
     expect(next.seats).toEqual([]);
     expect(next.students).toEqual([]);
     expect(next.assignments).toEqual([]);
-    expect(next.notices).toEqual(['Started a new project.']);
+    expect(noticeMessages()).toEqual(['Started a new project.']);
     expect(window.localStorage.getItem('deskgrid.layout.current')).toBeNull();
     expect(window.localStorage.getItem('deskgrid.roster.current')).toBeNull();
   });
@@ -184,7 +188,7 @@ describe('DeskGrid store', () => {
     expect(next.grid).toEqual({ width: 8, height: 6, frontEdge: 'bottom' });
     expect(next.seats).toEqual([{ id: 'seat:1,1', x: 1, y: 1 }]);
     expect(next.assignments).toEqual([]);
-    expect(next.notices).toEqual(['Imported layout.']);
+    expect(noticeMessages()).toEqual(['Imported layout.']);
   });
 
   it('imports the roster section when loading a full project file through load roster', () => {
@@ -215,6 +219,6 @@ describe('DeskGrid store', () => {
     expect(next.positionConstraints).toEqual([{ id: 'pos-1', studentId: 's2', type: 'prefer_front', hard: false }]);
     expect(next.assignments).toEqual([{ seatId: 'seat:2,2', studentId: 's2' }]);
     expect(next.unassignedStudentIds).toEqual([]);
-    expect(next.notices).toEqual(['Imported roster.']);
+    expect(noticeMessages()).toEqual(['Imported roster.']);
   });
 });
