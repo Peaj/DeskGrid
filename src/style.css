@@ -223,6 +223,7 @@
   }
 
   .workspace-stage {
+    --workspace-top-surface: rgb(236 247 255);
     --workspace-top-tint: rgba(236, 247, 255, 0.98);
     --workspace-top-tint-fade: rgba(224, 242, 254, 0.36);
     --workspace-tab-border: rgba(56, 189, 248, 0.75);
@@ -230,6 +231,7 @@
   }
 
   .workspace-stage.mode-layout {
+    --workspace-top-surface: rgb(236 247 255);
     --workspace-top-tint: rgba(236, 247, 255, 0.98);
     --workspace-top-tint-fade: rgba(224, 242, 254, 0.36);
     --workspace-tab-border: rgba(56, 189, 248, 0.75);
@@ -237,6 +239,7 @@
   }
 
   .workspace-stage.mode-student {
+    --workspace-top-surface: rgb(255 249 233);
     --workspace-top-tint: rgba(255, 249, 233, 0.98);
     --workspace-top-tint-fade: rgba(254, 243, 199, 0.38);
     --workspace-tab-border: rgba(245, 158, 11, 0.7);
@@ -248,10 +251,15 @@
   }
 
   .workspace-shell {
-    @apply relative overflow-hidden rounded-tl-none;
-    z-index: 15;
+    @apply relative overflow-hidden rounded-lg;
+    z-index: 10;
     margin-top: -4px;
-    border-top-width: 0;
+    border-color: var(--workspace-tab-border);
+    border-top-width: 1px;
+  }
+
+  .mode-layout .workspace-shell {
+    @apply rounded-tl-none;
   }
 
   .workspace-shell::before {
@@ -260,16 +268,17 @@
     inset: -1px 0 auto 0;
     height: 5.6rem;
     pointer-events: none;
-    background: linear-gradient(180deg, var(--workspace-top-tint) 0%, var(--workspace-top-tint-fade) 34%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(180deg, var(--workspace-top-surface) 0%, var(--workspace-top-surface) 10%, var(--workspace-top-tint-fade) 34%, rgba(255, 255, 255, 0) 100%);
   }
 
   .layer-tabs {
-    @apply relative z-10 flex w-fit items-end gap-2;
+    @apply relative flex w-fit items-end gap-2;
   }
 
   .layer-tab {
     @apply relative -mb-px inline-flex items-center gap-2 rounded-t-xl border border-b-0 border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 transition-all;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66);
+    z-index: 5;
   }
 
   .layer-tab-layout {
@@ -292,34 +301,38 @@
 
   .layer-tab.is-active {
     @apply z-20 text-slate-900;
-    transform: translateY(1px);
+    transform: translateY(-4px);
+  }
+
+  .layer-tab.is-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+    box-shadow: 0 12px 24px var(--workspace-tab-shadow);
+    clip-path: inset(-24px -24px 0 -24px round 1rem 1rem 0 0);
   }
 
   .layer-tab.is-active::after {
     content: '';
     position: absolute;
-    left: -1px;
-    right: -1px;
     bottom: -2px;
-    height: 4px;
-    background: var(--workspace-top-tint);
+    background: var(--workspace-top-surface);
   }
 
   .layer-tab-layout.is-active {
     border-color: var(--workspace-tab-border);
-    background: linear-gradient(180deg, rgba(125, 211, 252, 0.96) 0%, rgba(224, 242, 254, 0.98) 78%, rgba(236, 247, 255, 0.98) 100%);
-    box-shadow:
-      0 12px 24px var(--workspace-tab-shadow),
-      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    background: linear-gradient(180deg, rgba(125, 211, 252, 0.96) 0%, rgba(224, 242, 254, 0.98) 78%, var(--workspace-top-surface) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
     @apply text-sky-950;
   }
 
   .layer-tab-student.is-active {
     border-color: var(--workspace-tab-border);
-    background: linear-gradient(180deg, rgba(252, 211, 77, 0.95) 0%, rgba(254, 243, 199, 0.98) 78%, rgba(255, 249, 233, 0.98) 100%);
-    box-shadow:
-      0 12px 24px var(--workspace-tab-shadow),
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    background: linear-gradient(180deg, rgba(252, 211, 77, 0.95) 0%, rgba(254, 243, 199, 0.98) 78%, var(--workspace-top-surface) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
     @apply text-amber-950;
   }
 
