@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ConstraintPanel } from './components/ConstraintPanel';
 import { GridCanvas } from './components/GridCanvas';
 import type { GridLayer } from './components/GridCanvas';
@@ -16,12 +16,44 @@ async function readFileText(file: File): Promise<string> {
   return file.text();
 }
 
+const ACTIVE_LAYER_STORAGE_KEY = 'deskgrid.active-layer';
+
+function parseLayerHash(hash: string): GridLayer | null {
+  const normalized = hash.replace(/^#/, '').toLowerCase();
+  if (normalized === 'layout' || normalized === 'desk-layer') {
+    return 'layout';
+  }
+  if (normalized === 'student' || normalized === 'student-layer') {
+    return 'student';
+  }
+  return null;
+}
+
+function getLayerHash(layer: GridLayer): string {
+  return layer === 'layout' ? '#layout' : '#student';
+}
+
+function readInitialActiveLayer(): GridLayer {
+  if (typeof window === 'undefined') {
+    return 'layout';
+  }
+
+  const layerFromHash = parseLayerHash(window.location.hash);
+  if (layerFromHash) {
+    return layerFromHash;
+  }
+
+  const storedLayer = window.localStorage.getItem(ACTIVE_LAYER_STORAGE_KEY);
+  return storedLayer === 'student' || storedLayer === 'layout' ? storedLayer : 'layout';
+}
+
 export default function App() {
   const appVersion = __APP_VERSION__;
   const repoUrl = __REPO_URL__;
-  const [activeLayer, setActiveLayer] = useState<GridLayer>('layout');
+  const [activeLayer, setActiveLayer] = useState<GridLayer>(readInitialActiveLayer);
   const [gridShellWidth, setGridShellWidth] = useState(0);
   const [hoveredConstraintId, setHoveredConstraintId] = useState<string | null>(null);
+  const hasSyncedInitialLayerRef = useRef(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
   const layoutInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +129,37 @@ export default function App() {
     activeLayer === 'layout'
       ? 'Click or drag to paint or delete seats'
       : 'Drag students between bench and seats, to another student (pair rule), or to front/back anchors';
+
+  useEffect(() => {
+    const applyLayerFromHash = (): void => {
+      const layerFromHash = parseLayerHash(window.location.hash);
+      if (layerFromHash) {
+        setActiveLayer((current) => (current === layerFromHash ? current : layerFromHash));
+      }
+    };
+
+    window.addEventListener('hashchange', applyLayerFromHash);
+    return () => window.removeEventListener('hashchange', applyLayerFromHash);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(ACTIVE_LAYER_STORAGE_KEY, activeLayer);
+
+    const targetHash = getLayerHash(activeLayer);
+    if (window.location.hash === targetHash) {
+      hasSyncedInitialLayerRef.current = true;
+      return;
+    }
+
+    const nextUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+    if (!hasSyncedInitialLayerRef.current) {
+      window.history.replaceState(null, '', nextUrl);
+      hasSyncedInitialLayerRef.current = true;
+      return;
+    }
+
+    window.location.hash = targetHash;
+  }, [activeLayer]);
 
   return (
     <div className="relative isolate min-h-screen p-3 md:p-4">
