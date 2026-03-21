@@ -11,6 +11,7 @@ import type {
   PairConstraintType,
   PositionConstraint,
   PositionConstraintType,
+  ProjectFile,
   RosterFile,
   ScoreBreakdown,
   Seat,
@@ -19,18 +20,21 @@ import type {
 import { solveSeating } from '../solver';
 import {
   clearLocalStorageProject,
-  downloadTextFile,
   loadLayoutFromLocalStorage,
   loadRosterFromLocalStorage,
   parseLayoutFromJson,
+  parseProjectFromJson,
   parseRosterFromJson,
   saveLayoutToLocalStorage,
   saveRosterToLocalStorage,
+  saveTextFile,
   serializeLayout,
+  serializeProject,
   serializeRoster,
 } from '../storage/persistence';
 
 const SCHEMA_VERSION = 2;
+const PROJECT_SCHEMA_VERSION = 1;
 const defaultGrid: GridConfig = {
   width: 14,
   height: 10,
@@ -108,22 +112,8 @@ function createHydratedState(notices: string[] = []): Pick<
 }
 
 function withProjectPersistence(state: DeskGridState): void {
-  const layout: LayoutFile = {
-    schemaVersion: SCHEMA_VERSION,
-    grid: state.grid,
-    seats: state.seats,
-  };
-
-  const roster: RosterFile = {
-    schemaVersion: 1,
-    students: state.students,
-    pairConstraints: state.pairConstraints,
-    positionConstraints: state.positionConstraints,
-    assignments: state.assignments,
-  };
-
-  saveLayoutToLocalStorage(layout);
-  saveRosterToLocalStorage(roster);
+  saveLayoutToLocalStorage(buildLayoutFile(state));
+  saveRosterToLocalStorage(buildRosterFile(state));
 }
 
 function randomizeAssignments(students: Student[], seats: Seat[]): { assignments: Assignment[]; unassignedStudentIds: string[] } {
@@ -156,6 +146,37 @@ function computeUnassigned(students: Student[], assignments: Assignment[]): stri
   return students.map((student) => student.id).filter((studentId) => !assigned.has(studentId));
 }
 
+function buildLayoutFile(state: Pick<DeskGridState, 'grid' | 'seats'>): LayoutFile {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    grid: state.grid,
+    seats: state.seats,
+  };
+}
+
+function buildRosterFile(
+  state: Pick<DeskGridState, 'students' | 'pairConstraints' | 'positionConstraints' | 'assignments'>,
+): RosterFile {
+  return {
+    schemaVersion: 1,
+    students: state.students,
+    pairConstraints: state.pairConstraints,
+    positionConstraints: state.positionConstraints,
+    assignments: state.assignments,
+  };
+}
+
+function buildProjectFile(state: Pick<
+  DeskGridState,
+  'grid' | 'seats' | 'students' | 'pairConstraints' | 'positionConstraints' | 'assignments'
+>): ProjectFile {
+  return {
+    schemaVersion: PROJECT_SCHEMA_VERSION,
+    layout: buildLayoutFile(state),
+    roster: buildRosterFile(state),
+  };
+}
+
 interface DeskGridState {
   grid: GridConfig;
   seats: Seat[];
@@ -181,11 +202,11 @@ interface DeskGridState {
   removePairConstraint: (constraintId: string) => void;
   removePositionConstraint: (constraintId: string) => void;
   removeNotice: (index: number) => void;
-  saveProjectLocal: () => void;
-  loadProjectLocal: () => void;
   clearProjectLocal: () => void;
-  exportLayoutFile: () => void;
-  exportRosterFile: () => void;
+  exportProjectFile: () => Promise<void>;
+  importProjectJson: (text: string) => void;
+  exportLayoutFile: () => Promise<void>;
+  exportRosterFile: () => Promise<void>;
   importLayoutJson: (text: string) => void;
   importRosterJson: (text: string) => void;
 }
@@ -194,8 +215,8 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   ...createHydratedState(),
 
   resetProject: () => {
+    clearLocalStorageProject();
     set({ ...createDefaultState(), notices: ['Started a new project.'] });
-    withProjectPersistence(get());
   },
 
   toggleSeat: (x, y) => {
@@ -415,48 +436,44 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     set({ notices: state.notices.filter((_, noticeIndex) => noticeIndex !== index) });
   },
 
-  saveProjectLocal: () => {
-    withProjectPersistence(get());
-    set({ notices: ['Saved to local storage.'] });
-  },
-
-  loadProjectLocal: () => {
-    const layout = loadLayoutFromLocalStorage();
-    const roster = loadRosterFromLocalStorage();
-
-    if (!layout && !roster) {
-      set({ notices: ['No valid local project found.'] });
-      return;
-    }
-
-    set(createHydratedState(['Loaded project from local storage.']));
-  },
-
   clearProjectLocal: () => {
     clearLocalStorageProject();
     set({ notices: ['Local storage cleared.'] });
   },
 
-  exportLayoutFile: () => {
-    const state = get();
-    const payload: LayoutFile = {
-      schemaVersion: SCHEMA_VERSION,
-      grid: state.grid,
-      seats: state.seats,
-    };
-    downloadTextFile('layout.json', serializeLayout(payload));
+  exportProjectFile: async () => {
+    await saveTextFile('project.json', serializeProject(buildProjectFile(get())));
   },
 
-  exportRosterFile: () => {
-    const state = get();
-    const payload: RosterFile = {
-      schemaVersion: 1,
-      students: state.students,
-      pairConstraints: state.pairConstraints,
-      positionConstraints: state.positionConstraints,
-      assignments: state.assignments,
-    };
-    downloadTextFile('roster.json', serializeRoster(payload));
+  importProjectJson: (text) => {
+    try {
+      const project = parseProjectFromJson(text);
+      const assignments = cleanupAssignments(project.roster.assignments, project.layout.seats);
+      set({
+        grid: project.layout.grid,
+        seats: project.layout.seats,
+        students: project.roster.students,
+        pairConstraints: project.roster.pairConstraints,
+        positionConstraints: project.roster.positionConstraints,
+        assignments,
+        unassignedStudentIds: computeUnassigned(project.roster.students, assignments),
+        hardViolations: [],
+        scoreBreakdown: defaultScore,
+        notices: ['Imported project.'],
+      });
+      withProjectPersistence(get());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Project import failed.';
+      set({ notices: [message] });
+    }
+  },
+
+  exportLayoutFile: async () => {
+    await saveTextFile('layout.json', serializeLayout(buildLayoutFile(get())));
+  },
+
+  exportRosterFile: async () => {
+    await saveTextFile('roster.json', serializeRoster(buildRosterFile(get())));
   },
 
   importLayoutJson: (text) => {
@@ -469,11 +486,11 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         seats: layout.seats,
         assignments,
         unassignedStudentIds: computeUnassigned(state.students, assignments),
-        notices: ['Imported layout.json'],
+        notices: ['Imported layout.'],
       });
       withProjectPersistence(get());
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'layout.json import failed.';
+      const message = error instanceof Error ? error.message : 'Layout import failed.';
       set({ notices: [message] });
     }
   },
@@ -489,11 +506,11 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
         positionConstraints: roster.positionConstraints,
         assignments,
         unassignedStudentIds: computeUnassigned(roster.students, assignments),
-        notices: ['Imported roster.json'],
+        notices: ['Imported roster.'],
       });
       withProjectPersistence(get());
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'roster.json import failed.';
+      const message = error instanceof Error ? error.message : 'Roster import failed.';
       set({ notices: [message] });
     }
   },

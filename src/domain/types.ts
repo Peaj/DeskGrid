@@ -87,3 +87,9 @@ export interface RosterFile {
   positionConstraints: PositionConstraint[];
   assignments: Assignment[];
 }
+
+export interface ProjectFile {
+  schemaVersion: number;
+  layout: LayoutFile;
+  roster: RosterFile;
+}

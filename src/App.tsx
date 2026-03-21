@@ -20,6 +20,7 @@ export default function App() {
   const [gridShellWidth, setGridShellWidth] = useState(0);
   const [hoveredConstraintId, setHoveredConstraintId] = useState<string | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const projectInputRef = useRef<HTMLInputElement>(null);
   const layoutInputRef = useRef<HTMLInputElement>(null);
   const rosterInputRef = useRef<HTMLInputElement>(null);
   const {
@@ -45,9 +46,9 @@ export default function App() {
     removePairConstraint,
     removePositionConstraint,
     removeNotice,
-    saveProjectLocal,
-    loadProjectLocal,
     clearProjectLocal,
+    exportProjectFile,
+    importProjectJson,
     exportLayoutFile,
     exportRosterFile,
     importLayoutJson,
@@ -57,13 +58,13 @@ export default function App() {
   const layoutToolbarActions = [
     {
       id: 'load-layout',
-      tooltip: 'Load layout.json',
+      tooltip: 'Load Layout',
       icon: <LoadIcon />,
       onClick: () => layoutInputRef.current?.click(),
     },
     {
       id: 'save-layout',
-      tooltip: 'Save layout.json',
+      tooltip: 'Save Layout',
       icon: <SaveIcon />,
       onClick: exportLayoutFile,
     },
@@ -78,13 +79,13 @@ export default function App() {
     },
     {
       id: 'load-roster',
-      tooltip: 'Load roster.json',
+      tooltip: 'Load Roster',
       icon: <LoadIcon />,
       onClick: () => rosterInputRef.current?.click(),
     },
     {
       id: 'save-roster',
-      tooltip: 'Save roster.json',
+      tooltip: 'Save Roster',
       icon: <SaveIcon />,
       onClick: exportRosterFile,
     },
@@ -96,11 +97,9 @@ export default function App() {
         appVersion={appVersion}
         repoUrl={repoUrl}
         onNewProject={resetProject}
-        onSaveLocal={saveProjectLocal}
-        onLoadLocal={loadProjectLocal}
+        onSaveProject={exportProjectFile}
+        onLoadProject={() => projectInputRef.current?.click()}
         onClearLocal={clearProjectLocal}
-        onExportLayout={exportLayoutFile}
-        onExportRoster={exportRosterFile}
       />
 
       <section className="mt-3">
@@ -196,6 +195,22 @@ export default function App() {
             return;
           }
           importStudentsFromCsvText(await readFileText(file));
+          input.value = '';
+        }}
+      />
+
+      <input
+        hidden
+        ref={projectInputRef}
+        type="file"
+        accept="application/json"
+        onChange={async (event) => {
+          const input = event.currentTarget;
+          const file = input.files?.[0];
+          if (!file) {
+            return;
+          }
+          importProjectJson(await readFileText(file));
           input.value = '';
         }}
       />

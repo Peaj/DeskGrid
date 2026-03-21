@@ -4,7 +4,7 @@ export interface ToolbarAction {
   id: string;
   tooltip: string;
   icon: ReactNode;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
   tone?: 'default' | 'danger';
 }
 

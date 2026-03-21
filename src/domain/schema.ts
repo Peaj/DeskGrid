@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { LayoutFile, Seat } from './types';
+import type { LayoutFile, ProjectFile, Seat } from './types';
 
 export const gridConfigSchema = z.object({
   width: z.number().int().min(4).max(60),
@@ -115,3 +115,13 @@ export const rosterFileSchema = z.object({
   positionConstraints: z.array(positionConstraintSchema),
   assignments: z.array(assignmentSchema),
 });
+
+export const projectFileSchema = z.object({
+  schemaVersion: z.literal(1),
+  layout: layoutFileSchema,
+  roster: rosterFileSchema,
+});
+
+export function parseProjectFile(input: unknown): ProjectFile {
+  return projectFileSchema.parse(input);
+}

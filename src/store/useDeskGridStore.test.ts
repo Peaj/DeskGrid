@@ -133,4 +133,26 @@ describe('DeskGrid store', () => {
     expect(next.hardViolations).toHaveLength(0);
     expect(next.scoreBreakdown).toEqual({ hardViolations: 0, softPenalty: 0, totalPenalty: 0 });
   });
+
+  it('starts a new project by resetting state and clearing local storage', () => {
+    window.localStorage.setItem('deskgrid.layout.current', '{"stale":true}');
+    window.localStorage.setItem('deskgrid.roster.current', '{"stale":true}');
+
+    useDeskGridStore.setState({
+      seats: [{ id: 'seat:0,0', x: 0, y: 0 }],
+      students: [{ id: 's1', name: 'A' }],
+      assignments: [{ seatId: 'seat:0,0', studentId: 's1' }],
+      notices: [],
+    });
+
+    useDeskGridStore.getState().resetProject();
+
+    const next = useDeskGridStore.getState();
+    expect(next.seats).toEqual([]);
+    expect(next.students).toEqual([]);
+    expect(next.assignments).toEqual([]);
+    expect(next.notices).toEqual(['Started a new project.']);
+    expect(window.localStorage.getItem('deskgrid.layout.current')).toBeNull();
+    expect(window.localStorage.getItem('deskgrid.roster.current')).toBeNull();
+  });
 });

@@ -1,26 +1,24 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { ExportIcon, LoadIcon, NewProjectIcon, PrivacyIcon, SaveIcon, TrashIcon } from './icons';
+import { LoadIcon, NewProjectIcon, PrivacyIcon, SaveIcon, TrashIcon } from './icons';
+
+type MenuAction = () => void | Promise<void>;
 
 interface TopBarProps {
   appVersion: string;
   repoUrl: string;
   onNewProject: () => void;
-  onSaveLocal: () => void;
-  onLoadLocal: () => void;
+  onSaveProject: () => Promise<void>;
+  onLoadProject: () => void;
   onClearLocal: () => void;
-  onExportLayout: () => void;
-  onExportRoster: () => void;
 }
 
 export function TopBar({
   appVersion,
   repoUrl,
   onNewProject,
-  onSaveLocal,
-  onLoadLocal,
+  onSaveProject,
+  onLoadProject,
   onClearLocal,
-  onExportLayout,
-  onExportRoster,
 }: TopBarProps) {
   const projectMenuRef = useRef<HTMLDetailsElement>(null);
   const privacyMenuRef = useRef<HTMLDetailsElement>(null);
@@ -56,7 +54,7 @@ export function TopBar({
     };
   }, []);
 
-  function runMenuAction(action: () => void, menuRef: RefObject<HTMLDetailsElement | null>): void {
+  function runMenuAction(action: MenuAction, menuRef: RefObject<HTMLDetailsElement | null>): void {
     action();
     menuRef.current?.removeAttribute('open');
   }
@@ -101,7 +99,8 @@ export function TopBar({
               </div>
               <p className="privacy-panel-copy">
                 DeskGrid runs entirely in your browser. Student data, seating plans, constraints, and assignments
-                are stored locally in this browser via <code>localStorage</code>.
+                auto-save in this browser via <code>localStorage</code> and auto-load the next time you open DeskGrid
+                here.
               </p>
               {repoUrl ? (
                 <p className="privacy-panel-note">
@@ -116,31 +115,15 @@ export function TopBar({
                 <li>No account required</li>
                 <li>No cloud sync</li>
                 <li>No analytics or tracking</li>
-                <li>Clear local data or export project files at any time</li>
+                <li>Import or export project files from the Project menu</li>
               </ul>
               <div className="privacy-panel-actions">
-                <button className="app-menu-item" onClick={() => runMenuAction(onSaveLocal, privacyMenuRef)}>
-                  <SaveIcon />
-                  Save Local
-                </button>
-                <button className="app-menu-item" onClick={() => runMenuAction(onLoadLocal, privacyMenuRef)}>
-                  <LoadIcon />
-                  Load Local
-                </button>
-                <button className="app-menu-item" onClick={() => runMenuAction(onExportLayout, privacyMenuRef)}>
-                  <ExportIcon />
-                  Export layout.json
-                </button>
-                <button className="app-menu-item" onClick={() => runMenuAction(onExportRoster, privacyMenuRef)}>
-                  <ExportIcon />
-                  Export roster.json
-                </button>
                 <button
                   className="app-menu-item text-red-700"
                   onClick={() => runMenuAction(onClearLocal, privacyMenuRef)}
                 >
                   <TrashIcon />
-                  Clear Local
+                  Clear local storage
                 </button>
               </div>
             </div>
@@ -152,17 +135,13 @@ export function TopBar({
                 <NewProjectIcon />
                 New Project
               </button>
-              <button className="app-menu-item" onClick={() => runMenuAction(onSaveLocal, projectMenuRef)}>
+              <button className="app-menu-item" onClick={() => runMenuAction(onSaveProject, projectMenuRef)}>
                 <SaveIcon />
-                Save Local
+                Save Project
               </button>
-              <button className="app-menu-item" onClick={() => runMenuAction(onLoadLocal, projectMenuRef)}>
+              <button className="app-menu-item" onClick={() => runMenuAction(onLoadProject, projectMenuRef)}>
                 <LoadIcon />
-                Load Local
-              </button>
-              <button className="app-menu-item text-red-700" onClick={() => runMenuAction(onClearLocal, projectMenuRef)}>
-                <TrashIcon />
-                Clear Local
+                Load Project
               </button>
             </div>
           </details>
