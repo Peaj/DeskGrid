@@ -1,8 +1,9 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import type { PrintTone } from '../print';
-import { LoadIcon, NewProjectIcon, PrivacyIcon, PrintIcon, SaveIcon, TrashIcon } from './icons';
+import { FeedbackIcon, GitHubIcon, LoadIcon, NewProjectIcon, PrivacyIcon, PrintIcon, SaveIcon, TrashIcon } from './icons';
 
 type MenuAction = () => void | Promise<void>;
+const FEEDBACK_EMAIL = 'deskgrid@peaj.de';
 
 interface TopBarProps {
   appVersion: string;
@@ -29,12 +30,14 @@ export function TopBar({
   onLoadProject,
   onClearLocal,
 }: TopBarProps) {
+  const feedbackMenuRef = useRef<HTMLDetailsElement>(null);
   const projectMenuRef = useRef<HTMLDetailsElement>(null);
   const privacyMenuRef = useRef<HTMLDetailsElement>(null);
   const printMenuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
     const closeMenus = (): void => {
+      feedbackMenuRef.current?.removeAttribute('open');
       projectMenuRef.current?.removeAttribute('open');
       privacyMenuRef.current?.removeAttribute('open');
       printMenuRef.current?.removeAttribute('open');
@@ -44,7 +47,9 @@ export function TopBar({
       const target = event.target as Node | null;
       if (
         target &&
-        [projectMenuRef.current, privacyMenuRef.current, printMenuRef.current].some((menu) => menu?.contains(target))
+        [feedbackMenuRef.current, projectMenuRef.current, privacyMenuRef.current, printMenuRef.current].some((menu) =>
+          menu?.contains(target),
+        )
       ) {
         return;
       }
@@ -70,6 +75,10 @@ export function TopBar({
     menuRef.current?.removeAttribute('open');
   }
 
+  function closeMenu(menuRef: RefObject<HTMLDetailsElement | null>): void {
+    menuRef.current?.removeAttribute('open');
+  }
+
   const versionBadge = repoUrl ? (
     <a
       className="version-pill version-pill-link"
@@ -83,6 +92,14 @@ export function TopBar({
   ) : (
     <span className="version-pill">v{appVersion}</span>
   );
+  const feedbackBody =
+    typeof window === 'undefined'
+      ? `App version: v${appVersion}\n\nFeedback:\n`
+      : `App version: v${appVersion}\nPage: ${window.location.href}\n\nFeedback:\n`;
+  const feedbackHref = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(
+    `DeskGrid Feedback (v${appVersion})`,
+  )}&body=${encodeURIComponent(feedbackBody)}`;
+  const githubFeedbackHref = repoUrl ? `${repoUrl}/issues/new/choose` : '';
 
   return (
     <header className="app-bar">
@@ -96,6 +113,36 @@ export function TopBar({
           </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          <details className="app-menu" ref={feedbackMenuRef}>
+            <summary className="ui-btn">
+              <FeedbackIcon />
+              Feedback
+            </summary>
+            <div className="app-menu-panel feedback-menu-panel">
+              {githubFeedbackHref ? (
+                <a
+                  className="app-menu-item"
+                  href={githubFeedbackHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open GitHub issue creation"
+                  onClick={() => closeMenu(feedbackMenuRef)}
+                >
+                  <GitHubIcon />
+                  GitHub
+                </a>
+              ) : null}
+              <a
+                className="app-menu-item"
+                href={feedbackHref}
+                aria-label="Send feedback by email"
+                onClick={() => closeMenu(feedbackMenuRef)}
+              >
+                <FeedbackIcon />
+                E-Mail
+              </a>
+            </div>
+          </details>
           <details className="app-menu" ref={printMenuRef}>
             <summary className="ui-btn">
               <PrintIcon />

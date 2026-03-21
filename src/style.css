@@ -169,6 +169,10 @@
     @apply w-60 p-2;
   }
 
+  .feedback-menu-panel {
+    @apply w-44 p-1;
+  }
+
   .print-menu-section {
     @apply mb-2;
   }

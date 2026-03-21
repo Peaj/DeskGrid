@@ -1,4 +1,5 @@
 import type { IconBaseProps, IconType } from 'react-icons';
+import { FaGithub } from 'react-icons/fa6';
 import {
   MdAutoFixHigh,
   MdCancel,
@@ -8,6 +9,7 @@ import {
   MdExpandMore,
   MdDeleteOutline,
   MdDownload,
+  MdEmail,
   MdLink,
   MdSwapHoriz,
   MdRemove,
@@ -55,3 +57,5 @@ export const CloseIcon = withDefaultClass(MdClose);
 export const PrivacyIcon = withDefaultClass(MdShield);
 export const DeskLayerIcon = withDefaultClass(MdTableRestaurant);
 export const PrintIcon = withDefaultClass(MdPrint);
+export const FeedbackIcon = withDefaultClass(MdEmail);
+export const GitHubIcon = withDefaultClass(FaGithub);

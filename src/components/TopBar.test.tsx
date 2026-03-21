@@ -129,4 +129,38 @@ describe('TopBar privacy messaging', () => {
 
     expect(screen.getByText('Open Print Preview')).toBeDisabled();
   });
+
+  it('shows feedback options for GitHub and email', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TopBar
+        appVersion="0.4.0"
+        repoUrl="https://github.com/Peaj/DeskGrid"
+        printTone="color"
+        canPrint
+        onPrintToneChange={vi.fn()}
+        onOpenPrintPreview={vi.fn()}
+        onNewProject={vi.fn()}
+        onSaveProject={vi.fn()}
+        onLoadProject={vi.fn()}
+        onClearLocal={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByText('Feedback', { selector: 'summary' }));
+
+    expect(screen.getByRole('link', { name: 'Open GitHub issue creation' })).toHaveAttribute(
+      'href',
+      'https://github.com/Peaj/DeskGrid/issues/new/choose',
+    );
+    expect(screen.getByRole('link', { name: 'Send feedback by email' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:deskgrid@peaj.de'),
+    );
+    expect(screen.getByRole('link', { name: 'Send feedback by email' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('DeskGrid%20Feedback'),
+    );
+  });
 });
