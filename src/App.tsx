@@ -49,6 +49,16 @@ function readInitialActiveLayer(): GridLayer {
   return storedLayer === 'student' || storedLayer === 'layout' ? storedLayer : 'layout';
 }
 
+function readPrintAppUrl(): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const url = new URL(window.location.href);
+  url.hash = '';
+  return url.toString();
+}
+
 export default function App() {
   const appVersion = __APP_VERSION__;
   const repoUrl = __REPO_URL__;
@@ -134,6 +144,7 @@ export default function App() {
       ? 'Click or drag to paint or delete seats'
       : 'Drag students between bench and seats, to another student (pair rule), or to front/back anchors';
   const printOrientation = getPrintOrientation(grid);
+  const printAppUrl = readPrintAppUrl();
 
   useEffect(() => {
     return () => {
@@ -365,7 +376,7 @@ export default function App() {
         assignments={assignments}
         tone={printTone}
         orientation={printOrientation}
-        repoUrl={repoUrl}
+        appUrl={printAppUrl}
       />
     </div>
   );

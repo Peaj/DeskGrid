@@ -21,7 +21,7 @@ describe('PrintableLayout', () => {
         ]}
         tone="color"
         orientation="portrait"
-        repoUrl="https://github.com/Peaj/DeskGrid"
+        appUrl="https://deskgrid.example/app"
       />,
     );
 
@@ -38,7 +38,7 @@ describe('PrintableLayout', () => {
         assignments={[{ seatId: 'seat-a', studentId: 's1' }]}
         tone="bw"
         orientation="landscape"
-        repoUrl="https://github.com/Peaj/DeskGrid"
+        appUrl="https://deskgrid.example/app"
       />,
     );
 
@@ -59,7 +59,7 @@ describe('PrintableLayout', () => {
         assignments={[]}
         tone="color"
         orientation="portrait"
-        repoUrl="https://github.com/Peaj/DeskGrid"
+        appUrl="https://deskgrid.example/app"
       />,
     );
 
@@ -67,7 +67,7 @@ describe('PrintableLayout', () => {
     expect(screen.queryByText('Seat')).toBeNull();
   });
 
-  it('renders the DeskGrid footer with the project url', () => {
+  it('renders the DeskGrid header with the app url without protocol', () => {
     render(
       <PrintableLayout
         grid={{ width: 1, height: 1, frontEdge: 'bottom' }}
@@ -76,14 +76,14 @@ describe('PrintableLayout', () => {
         assignments={[]}
         tone="color"
         orientation="portrait"
-        repoUrl="https://github.com/Peaj/DeskGrid"
+        appUrl="https://deskgrid.example/app"
       />,
     );
 
-    expect(screen.getByTestId('print-footer')).toHaveTextContent('Created with DESKGRID');
-    expect(screen.getByRole('link', { name: 'https://github.com/Peaj/DeskGrid' })).toHaveAttribute(
+    expect(screen.getByTestId('print-header')).toHaveTextContent('DESKGRID');
+    expect(screen.getByRole('link', { name: 'deskgrid.example/app' })).toHaveAttribute(
       'href',
-      'https://github.com/Peaj/DeskGrid',
+      'https://deskgrid.example/app',
     );
   });
 });

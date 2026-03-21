@@ -53,13 +53,15 @@ function createMockState(overrides: MockStateOverrides = {}) {
 
 describe('App print mode', () => {
   let currentState = createMockState();
+  let expectedAppUrl = '';
 
   beforeEach(() => {
     document.getElementById(PRINT_PAGE_STYLE_ID)?.remove();
     currentState = createMockState();
     storeHook.mockImplementation(() => currentState);
     window.localStorage.clear();
-    window.location.hash = '';
+    window.history.replaceState(null, '', '/app#student');
+    expectedAppUrl = new URL('/app', window.location.origin).toString();
     window.print = vi.fn();
   });
 
@@ -100,5 +102,14 @@ describe('App print mode', () => {
     await user.click(screen.getByText('Black & White'));
 
     expect(screen.getByTestId('print-root')).toHaveAttribute('data-print-tone', 'bw');
+  });
+
+  it('uses the current web app url in the printable footer', () => {
+    render(<App />);
+
+    expect(screen.getByRole('link', { name: expectedAppUrl.replace(/^https?:\/\//, '') })).toHaveAttribute(
+      'href',
+      expectedAppUrl,
+    );
   });
 });

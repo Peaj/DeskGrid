@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Assignment, GridConfig, Seat, Student } from '../domain/types';
-import type { PrintOrientation, PrintTone } from '../print';
+import { PRINT_PAGE_MARGIN_MM, type PrintOrientation, type PrintTone } from '../print';
 
 interface PrintableLayoutProps {
   grid: GridConfig;
@@ -9,27 +9,28 @@ interface PrintableLayoutProps {
   assignments: Assignment[];
   tone: PrintTone;
   orientation: PrintOrientation;
-  repoUrl?: string;
+  appUrl?: string;
 }
 
 const PRINT_PAGE_DIMENSIONS_MM: Record<PrintOrientation, { width: number; height: number; padding: number }> = {
-  portrait: { width: 190, height: 277, padding: 8 },
-  landscape: { width: 277, height: 190, padding: 8 },
+  portrait: { width: 210 - PRINT_PAGE_MARGIN_MM * 2, height: 297 - PRINT_PAGE_MARGIN_MM * 2, padding: 4 },
+  landscape: { width: 297 - PRINT_PAGE_MARGIN_MM * 2, height: 210 - PRINT_PAGE_MARGIN_MM * 2, padding: 4 },
 };
 
-const LABEL_BAND_MM = 8;
-const FOOTER_BAND_MM = 10;
-const CONTENT_GAP_MM = 3;
+const HEADER_BAND_MM = 7;
+const LABEL_BAND_MM = 5;
+const CONTENT_GAP_MM = 2;
 
-export function PrintableLayout({ grid, seats, students, assignments, tone, orientation, repoUrl }: PrintableLayoutProps) {
+export function PrintableLayout({ grid, seats, students, assignments, tone, orientation, appUrl }: PrintableLayoutProps) {
   const dimensions = PRINT_PAGE_DIMENSIONS_MM[orientation];
   const printableWidth = dimensions.width - dimensions.padding * 2;
   const printableHeight =
-    dimensions.height - dimensions.padding * 2 - LABEL_BAND_MM * 2 - FOOTER_BAND_MM - CONTENT_GAP_MM * 3;
+    dimensions.height - dimensions.padding * 2 - HEADER_BAND_MM - LABEL_BAND_MM * 2 - CONTENT_GAP_MM * 3;
   const cellSize = Math.min(printableWidth / Math.max(grid.width, 1), printableHeight / Math.max(grid.height, 1));
   const studentById = new Map(students.map((student) => [student.id, student]));
   const studentIdBySeatId = new Map(assignments.map((assignment) => [assignment.seatId, assignment.studentId]));
   const seatByCoord = new Map(seats.map((seat) => [`${seat.x},${seat.y}`, seat]));
+  const displayUrl = appUrl ? appUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '') : '';
   const pageStyle: CSSProperties = {
     width: `${dimensions.width}mm`,
     height: `${dimensions.height}mm`,
@@ -51,6 +52,14 @@ export function PrintableLayout({ grid, seats, students, assignments, tone, orie
         data-testid="printable-layout"
         style={pageStyle}
       >
+        <header className="print-header" data-testid="print-header">
+          <span className="print-brand">DESKGRID</span>
+          {appUrl ? (
+            <a className="print-url" href={appUrl} target="_blank" rel="noreferrer">
+              {displayUrl}
+            </a>
+          ) : null}
+        </header>
         <div className="print-orientation-label" data-testid="print-back-label">
           Back
         </div>
@@ -78,14 +87,6 @@ export function PrintableLayout({ grid, seats, students, assignments, tone, orie
         <div className="print-orientation-label print-front-label" data-testid="print-front-label">
           Front
         </div>
-        <footer className="print-footer" data-testid="print-footer">
-          <span>Created with DESKGRID</span>
-          {repoUrl ? (
-            <a href={repoUrl} target="_blank" rel="noreferrer">
-              {repoUrl}
-            </a>
-          ) : null}
-        </footer>
       </section>
     </div>
   );

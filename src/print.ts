@@ -4,6 +4,7 @@ export type PrintTone = 'color' | 'bw';
 export type PrintOrientation = 'portrait' | 'landscape';
 
 export const PRINT_PAGE_STYLE_ID = 'deskgrid-print-page-style';
+export const PRINT_PAGE_MARGIN_MM = 6;
 
 export function getPrintOrientation(grid: Pick<GridConfig, 'width' | 'height'>): PrintOrientation {
   return grid.width > grid.height ? 'landscape' : 'portrait';
@@ -21,7 +22,7 @@ export function applyPrintPageStyle(orientation: PrintOrientation): () => void {
     document.head.append(style);
   }
 
-  style.textContent = `@page { size: A4 ${orientation}; margin: 10mm; }`;
+  style.textContent = `@page { size: A4 ${orientation}; margin: ${PRINT_PAGE_MARGIN_MM}mm; }`;
 
   return () => {
     style?.remove();
