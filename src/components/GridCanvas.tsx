@@ -198,6 +198,7 @@ export function GridCanvas({
     width: gridWidth,
     height: gridHeight,
     ['--cell-size' as string]: `${cellSize}px`,
+    ['--student-seat-inset' as string]: `${Math.round(Math.max(5, Math.min(9, cellSize * 0.109375)))}px`,
   };
   const shellStyle: CSSProperties = {
     width: gridWidth,
@@ -538,7 +539,10 @@ export function GridCanvas({
                       isDraggingStudent && studentForLayer.id !== activeDrag?.studentId ? 'drop-student-candidate' : ''
                     } ${isDraggingStudent && dragHover.studentId === studentForLayer.id ? 'drop-student-hover' : ''}`}
                     data-student-id={studentForLayer.id}
-                    style={{ left: seat.x * cellSize + 7, top: seat.y * cellSize + 7 }}
+                    style={{
+                      left: `calc(${seat.x * cellSize}px + var(--student-seat-inset, 7px))`,
+                      top: `calc(${seat.y * cellSize}px + var(--student-seat-inset, 7px))`,
+                    }}
                     onPointerDown={(event) => {
                       if (activeLayer !== 'student') {
                         return;

@@ -702,7 +702,7 @@
     position: absolute;
     width: var(--cell-size, 64px);
     height: var(--cell-size, 64px);
-    padding: 3px;
+    padding: clamp(2px, calc(var(--cell-size, 64px) * 0.047), 4px);
     z-index: 3;
     pointer-events: none;
     display: flex;
@@ -779,18 +779,21 @@
   }
 
   .seat-empty {
-    @apply inline-flex items-center justify-center rounded-full border-2 border-dotted border-white/70 bg-white/10 text-[11px] font-bold text-white;
-    width: calc(var(--cell-size, 64px) - 16px);
-    height: calc(var(--cell-size, 64px) - 16px);
+    @apply inline-flex items-center justify-center rounded-full border-2 border-dotted border-white/70 bg-white/10 font-bold text-white;
+    width: calc(var(--cell-size, 64px) - (clamp(6px, calc(var(--cell-size, 64px) * 0.125), 10px) * 2));
+    height: calc(var(--cell-size, 64px) - (clamp(6px, calc(var(--cell-size, 64px) * 0.125), 10px) * 2));
+    font-size: clamp(9px, calc(var(--cell-size, 64px) * 0.17), 11px);
     user-select: none;
   }
 
   .student-chip {
     position: relative;
     overflow: hidden;
-    @apply pointer-events-auto flex select-none flex-col items-center justify-center gap-0 rounded-full border border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100 px-1 py-1 text-center text-[11px] leading-tight text-amber-900;
-    width: calc(var(--cell-size, 64px) - 14px);
-    height: calc(var(--cell-size, 64px) - 14px);
+    @apply pointer-events-auto flex select-none flex-col items-center justify-center gap-0 rounded-full border border-amber-300 bg-gradient-to-b from-amber-50 to-amber-100 text-center leading-tight text-amber-900;
+    width: calc(var(--cell-size, 64px) - (clamp(5px, calc(var(--cell-size, 64px) * 0.109375), 9px) * 2));
+    height: calc(var(--cell-size, 64px) - (clamp(5px, calc(var(--cell-size, 64px) * 0.109375), 9px) * 2));
+    padding: clamp(2px, calc(var(--cell-size, 64px) * 0.05), 4px);
+    font-size: clamp(9px, calc(var(--cell-size, 64px) * 0.17), 11px);
     box-shadow: 0 4px 9px rgba(96, 64, 8, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
     -webkit-user-select: none;
     transition:
