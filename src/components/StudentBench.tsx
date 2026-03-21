@@ -26,6 +26,7 @@ export function StudentBench({ students, unassignedStudentIds, onImportCsvText }
     () => unassignedStudentIds.map((studentId) => studentById.get(studentId)).filter((student): student is Student => Boolean(student)),
     [studentById, unassignedStudentIds],
   );
+  const showEmptyBenchState = students.length === 0 || benchStudents.length === 0;
 
   useEffect(() => {
     const stopHandler = (): void => setDraggingStudentId(null);
@@ -84,9 +85,7 @@ export function StudentBench({ students, unassignedStudentIds, onImportCsvText }
         </p>
       </div>
 
-      {students.length === 0 ? (
-        <p className="meta">Import a CSV to populate students.</p>
-      ) : benchStudents.length === 0 ? (
+      {showEmptyBenchState ? (
         <div className="bench-empty-dropzone">
           <p>Bench empty</p>
           <p>Drop `students.csv` here to import a new class.</p>
