@@ -11,23 +11,27 @@ export interface ToolbarAction {
 interface ToolbarProps {
   ariaLabel: string;
   actions: ToolbarAction[];
+  helperText?: string;
 }
 
-export function Toolbar({ ariaLabel, actions }: ToolbarProps) {
+export function Toolbar({ ariaLabel, actions, helperText }: ToolbarProps) {
   return (
     <div className="toolbar" role="toolbar" aria-label={ariaLabel}>
-      {actions.map((action) => (
-        <button
-          key={action.id}
-          className={`ui-btn toolbar-icon-btn ${action.tone === 'danger' ? 'ui-btn-danger' : ''}`}
-          onClick={action.onClick}
-          aria-label={action.tooltip}
-          title={action.tooltip}
-          data-tooltip={action.tooltip}
-        >
-          {action.icon}
-        </button>
-      ))}
+      <div className="toolbar-actions">
+        {actions.map((action) => (
+          <button
+            key={action.id}
+            className={`ui-btn toolbar-icon-btn ${action.tone === 'danger' ? 'ui-btn-danger' : ''}`}
+            onClick={action.onClick}
+            aria-label={action.tooltip}
+            title={action.tooltip}
+            data-tooltip={action.tooltip}
+          >
+            {action.icon}
+          </button>
+        ))}
+      </div>
+      {helperText ? <p className="toolbar-helper">{helperText}</p> : null}
     </div>
   );
 }

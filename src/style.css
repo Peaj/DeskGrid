@@ -267,7 +267,15 @@
   }
 
   .toolbar {
-    @apply flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100/80 p-1;
+    @apply flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-100/80 p-1.5;
+  }
+
+  .toolbar-actions {
+    @apply flex items-center gap-1;
+  }
+
+  .toolbar-helper {
+    @apply min-w-0 flex-1 text-sm leading-5 text-slate-600;
   }
 
   .toolbar-icon-btn {
@@ -318,6 +326,10 @@
     @apply border-sky-300 bg-white text-sky-900;
   }
 
+  .mode-layout .toolbar-helper {
+    @apply text-sky-900/80;
+  }
+
   .mode-student .toolbar {
     @apply border-amber-200 bg-amber-50/80;
   }
@@ -328,6 +340,10 @@
 
   .mode-student .toolbar-icon-btn:hover {
     @apply border-amber-300 bg-white text-amber-900;
+  }
+
+  .mode-student .toolbar-helper {
+    @apply text-amber-900/80;
   }
 
   .panel-header {

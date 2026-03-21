@@ -579,19 +579,6 @@ export function GridCanvas({
           })}
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
-          {activeLayer === 'layout' ? (
-            <>
-              <span>Click or drag with mouse down to paint seats on/off.</span>
-              <span>Use the front/back zones to orient the room while placing seats.</span>
-            </>
-          ) : (
-            <>
-              <span>Base seats are locked in this layer.</span>
-              <span>Drag students between bench and seats, to another student (pair rule), or to front/back anchors.</span>
-            </>
-          )}
-        </div>
       </div>
 
       {pendingPair && pendingPairPosition &&

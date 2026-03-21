@@ -91,6 +91,10 @@ export default function App() {
       onClick: exportRosterFile,
     },
   ];
+  const toolbarHelperText =
+    activeLayer === 'layout'
+      ? 'Click or drag to paint or delete seats'
+      : 'Drag students between bench and seats, to another student (pair rule), or to front/back anchors';
 
   return (
     <div className="relative isolate min-h-screen p-3 md:p-4">
@@ -127,6 +131,7 @@ export default function App() {
           <Toolbar
             ariaLabel={activeLayer === 'layout' ? 'Layout toolbar' : 'Student toolbar'}
             actions={activeLayer === 'layout' ? layoutToolbarActions : studentToolbarActions}
+            helperText={toolbarHelperText}
           />
 
           <main
