@@ -17,7 +17,7 @@ import type {
   Seat,
   Student,
 } from '../domain/types';
-import { solveSeating } from '../solver';
+import { evaluateAssignments, solveSeating } from '../solver';
 import {
   clearLocalStorageProject,
   loadLayoutFromLocalStorage,
@@ -47,6 +47,13 @@ const defaultScore: ScoreBreakdown = {
   totalPenalty: 0,
 };
 
+interface DerivedPlanState {
+  assignments: Assignment[];
+  unassignedStudentIds: string[];
+  hardViolations: HardViolation[];
+  scoreBreakdown: ScoreBreakdown;
+}
+
 export interface Notice {
   id: string;
   message: string;
@@ -61,6 +68,32 @@ function createNotice(message: string): Notice {
 
 function createNotices(messages: string[]): Notice[] {
   return messages.map((message) => createNotice(message));
+}
+
+function derivePlanState(
+  state: Pick<DeskGridState, 'grid' | 'seats' | 'students' | 'pairConstraints' | 'positionConstraints'>,
+  assignments: Assignment[],
+): DerivedPlanState {
+  const normalizedAssignments = cleanupAssignments(assignments, state.seats);
+  const unassignedStudentIds = computeUnassigned(state.students, normalizedAssignments);
+  const evaluation =
+    normalizedAssignments.length === 0 && state.pairConstraints.length === 0 && state.positionConstraints.length === 0
+      ? { hardViolations: [], scoreBreakdown: defaultScore }
+      : evaluateAssignments(
+          normalizedAssignments,
+          state.seats,
+          state.students,
+          state.pairConstraints,
+          state.positionConstraints,
+          state.grid.height,
+        );
+
+  return {
+    assignments: normalizedAssignments,
+    unassignedStudentIds,
+    hardViolations: evaluation.hardViolations,
+    scoreBreakdown: evaluation.scoreBreakdown,
+  };
 }
 
 function createDefaultState(): Pick<
@@ -111,7 +144,16 @@ function createHydratedState(notices: string[] = []): Pick<
   const students = roster?.students ?? [];
   const pairConstraints = roster?.pairConstraints ?? [];
   const positionConstraints = roster?.positionConstraints ?? [];
-  const assignments = cleanupAssignments(roster?.assignments ?? [], seats);
+  const derivedPlan = derivePlanState(
+    {
+      grid,
+      seats,
+      students,
+      pairConstraints,
+      positionConstraints,
+    },
+    roster?.assignments ?? [],
+  );
 
   return {
     grid,
@@ -119,10 +161,10 @@ function createHydratedState(notices: string[] = []): Pick<
     students,
     pairConstraints,
     positionConstraints,
-    assignments,
-    unassignedStudentIds: computeUnassigned(students, assignments),
-    hardViolations: [],
-    scoreBreakdown: defaultScore,
+    assignments: derivedPlan.assignments,
+    unassignedStudentIds: derivedPlan.unassignedStudentIds,
+    hardViolations: derivedPlan.hardViolations,
+    scoreBreakdown: derivedPlan.scoreBreakdown,
     notices: createNotices(notices),
   };
 }
@@ -254,12 +296,23 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   toggleSeat: (x, y) => {
     const state = get();
     const seats = toggleSeatAt(state.seats, x, y, state.grid);
-    const assignments = cleanupAssignments(state.assignments, seats);
+    const derivedPlan = derivePlanState(
+      {
+        grid: state.grid,
+        seats,
+        students: state.students,
+        pairConstraints: state.pairConstraints,
+        positionConstraints: state.positionConstraints,
+      },
+      state.assignments,
+    );
 
     set({
       seats,
-      assignments,
-      unassignedStudentIds: computeUnassigned(state.students, assignments),
+      assignments: derivedPlan.assignments,
+      unassignedStudentIds: derivedPlan.unassignedStudentIds,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: [],
     });
     withProjectPersistence(get());
@@ -269,10 +322,22 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const state = get();
     try {
       const result = parseStudentsCsv(text);
+      const derivedPlan = derivePlanState(
+        {
+          grid: state.grid,
+          seats: state.seats,
+          students: result.students,
+          pairConstraints: state.pairConstraints,
+          positionConstraints: state.positionConstraints,
+        },
+        [],
+      );
       set({
         students: result.students,
-        assignments: [],
-        unassignedStudentIds: result.students.map((student) => student.id),
+        assignments: derivedPlan.assignments,
+        unassignedStudentIds: derivedPlan.unassignedStudentIds,
+        hardViolations: derivedPlan.hardViolations,
+        scoreBreakdown: derivedPlan.scoreBreakdown,
         notices: createNotices(result.warnings.length > 0 ? result.warnings.slice(0, 5) : ['Imported students.']),
       });
       withProjectPersistence(get());
@@ -285,11 +350,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   randomAssign: () => {
     const state = get();
     const random = randomizeAssignments(state.students, state.seats);
+    const derivedPlan = derivePlanState(state, random.assignments);
     set({
-      assignments: random.assignments,
-      unassignedStudentIds: random.unassignedStudentIds,
-      hardViolations: [],
-      scoreBreakdown: defaultScore,
+      assignments: derivedPlan.assignments,
+      unassignedStudentIds: derivedPlan.unassignedStudentIds,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: createNotices(['Random assignment generated.']),
     });
     withProjectPersistence(get());
@@ -297,11 +363,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   benchAllStudents: () => {
     const state = get();
+    const derivedPlan = derivePlanState(state, []);
     set({
-      assignments: [],
-      unassignedStudentIds: state.students.map((student) => student.id),
-      hardViolations: [],
-      scoreBreakdown: defaultScore,
+      assignments: derivedPlan.assignments,
+      unassignedStudentIds: derivedPlan.unassignedStudentIds,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: createNotices(['All students moved back to the bench.']),
     });
     withProjectPersistence(get());
@@ -379,9 +446,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     }
 
     const normalized = cleanupAssignments(assignments, state.seats);
+    const derivedPlan = derivePlanState(state, normalized);
     set({
-      assignments: normalized,
-      unassignedStudentIds: computeUnassigned(state.students, normalized),
+      assignments: derivedPlan.assignments,
+      unassignedStudentIds: derivedPlan.unassignedStudentIds,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: [],
     });
     withProjectPersistence(get());
@@ -394,9 +464,12 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       return;
     }
 
+    const derivedPlan = derivePlanState(state, assignments);
     set({
-      assignments,
-      unassignedStudentIds: computeUnassigned(state.students, assignments),
+      assignments: derivedPlan.assignments,
+      unassignedStudentIds: derivedPlan.unassignedStudentIds,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: [],
     });
     withProjectPersistence(get());
@@ -426,7 +499,23 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       ? state.pairConstraints.map((constraint) => (constraint.id === existing.id ? nextConstraint : constraint))
       : [...state.pairConstraints, nextConstraint];
 
-    set({ pairConstraints, notices: createNotices(['Pair constraint updated.']) });
+    const derivedPlan = derivePlanState(
+      {
+        grid: state.grid,
+        seats: state.seats,
+        students: state.students,
+        pairConstraints,
+        positionConstraints: state.positionConstraints,
+      },
+      state.assignments,
+    );
+
+    set({
+      pairConstraints,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
+      notices: createNotices(['Pair constraint updated.']),
+    });
     withProjectPersistence(get());
   },
 
@@ -440,8 +529,22 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
       hard: false,
     };
 
+    const positionConstraints = [...filtered, next];
+    const derivedPlan = derivePlanState(
+      {
+        grid: state.grid,
+        seats: state.seats,
+        students: state.students,
+        pairConstraints: state.pairConstraints,
+        positionConstraints,
+      },
+      state.assignments,
+    );
+
     set({
-      positionConstraints: [...filtered, next],
+      positionConstraints,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
       notices: createNotices(['Position preference updated.']),
     });
     withProjectPersistence(get());
@@ -449,16 +552,42 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
 
   removePairConstraint: (constraintId) => {
     const state = get();
+    const pairConstraints = state.pairConstraints.filter((constraint) => constraint.id !== constraintId);
+    const derivedPlan = derivePlanState(
+      {
+        grid: state.grid,
+        seats: state.seats,
+        students: state.students,
+        pairConstraints,
+        positionConstraints: state.positionConstraints,
+      },
+      state.assignments,
+    );
     set({
-      pairConstraints: state.pairConstraints.filter((constraint) => constraint.id !== constraintId),
+      pairConstraints,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
     });
     withProjectPersistence(get());
   },
 
   removePositionConstraint: (constraintId) => {
     const state = get();
+    const positionConstraints = state.positionConstraints.filter((constraint) => constraint.id !== constraintId);
+    const derivedPlan = derivePlanState(
+      {
+        grid: state.grid,
+        seats: state.seats,
+        students: state.students,
+        pairConstraints: state.pairConstraints,
+        positionConstraints,
+      },
+      state.assignments,
+    );
     set({
-      positionConstraints: state.positionConstraints.filter((constraint) => constraint.id !== constraintId),
+      positionConstraints,
+      hardViolations: derivedPlan.hardViolations,
+      scoreBreakdown: derivedPlan.scoreBreakdown,
     });
     withProjectPersistence(get());
   },
@@ -480,17 +609,26 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
   importProjectJson: (text) => {
     try {
       const project = parseProjectFromJson(text);
-      const assignments = cleanupAssignments(project.roster.assignments, project.layout.seats);
+      const derivedPlan = derivePlanState(
+        {
+          grid: project.layout.grid,
+          seats: project.layout.seats,
+          students: project.roster.students,
+          pairConstraints: project.roster.pairConstraints,
+          positionConstraints: project.roster.positionConstraints,
+        },
+        project.roster.assignments,
+      );
       set({
         grid: project.layout.grid,
         seats: project.layout.seats,
         students: project.roster.students,
         pairConstraints: project.roster.pairConstraints,
         positionConstraints: project.roster.positionConstraints,
-        assignments,
-        unassignedStudentIds: computeUnassigned(project.roster.students, assignments),
-        hardViolations: [],
-        scoreBreakdown: defaultScore,
+        assignments: derivedPlan.assignments,
+        unassignedStudentIds: derivedPlan.unassignedStudentIds,
+        hardViolations: derivedPlan.hardViolations,
+        scoreBreakdown: derivedPlan.scoreBreakdown,
         notices: createNotices(['Imported project.']),
       });
       withProjectPersistence(get());
@@ -512,12 +650,23 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const state = get();
     try {
       const layout = parseLayoutOrProjectJson(text);
-      const assignments = cleanupAssignments(state.assignments, layout.seats);
+      const derivedPlan = derivePlanState(
+        {
+          grid: layout.grid,
+          seats: layout.seats,
+          students: state.students,
+          pairConstraints: state.pairConstraints,
+          positionConstraints: state.positionConstraints,
+        },
+        state.assignments,
+      );
       set({
         grid: layout.grid,
         seats: layout.seats,
-        assignments,
-        unassignedStudentIds: computeUnassigned(state.students, assignments),
+        assignments: derivedPlan.assignments,
+        unassignedStudentIds: derivedPlan.unassignedStudentIds,
+        hardViolations: derivedPlan.hardViolations,
+        scoreBreakdown: derivedPlan.scoreBreakdown,
         notices: createNotices(['Imported layout.']),
       });
       withProjectPersistence(get());
@@ -531,13 +680,24 @@ export const useDeskGridStore = create<DeskGridState>((set, get) => ({
     const state = get();
     try {
       const roster = parseRosterOrProjectJson(text);
-      const assignments = cleanupAssignments(roster.assignments, state.seats);
+      const derivedPlan = derivePlanState(
+        {
+          grid: state.grid,
+          seats: state.seats,
+          students: roster.students,
+          pairConstraints: roster.pairConstraints,
+          positionConstraints: roster.positionConstraints,
+        },
+        roster.assignments,
+      );
       set({
         students: roster.students,
         pairConstraints: roster.pairConstraints,
         positionConstraints: roster.positionConstraints,
-        assignments,
-        unassignedStudentIds: computeUnassigned(roster.students, assignments),
+        assignments: derivedPlan.assignments,
+        unassignedStudentIds: derivedPlan.unassignedStudentIds,
+        hardViolations: derivedPlan.hardViolations,
+        scoreBreakdown: derivedPlan.scoreBreakdown,
         notices: createNotices(['Imported roster.']),
       });
       withProjectPersistence(get());

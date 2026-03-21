@@ -390,14 +390,14 @@ export function solveSeating(input: SolveInput): SolveResult {
   };
 }
 
-export function evaluateStateForDebug(
+export function evaluateAssignments(
   assignments: Assignment[],
   seats: Seat[],
   students: Student[],
   pairConstraints: PairConstraint[],
   positionConstraints: PositionConstraint[],
   gridHeight: number,
-): ScoreBreakdown {
+): Pick<SolveResult, 'hardViolations' | 'scoreBreakdown'> {
   const state = createEmptyState(seats);
   for (const assignment of assignments) {
     if (!state.assignmentBySeat.has(assignment.seatId)) {
@@ -409,8 +409,22 @@ export function evaluateStateForDebug(
 
   const evalResult = evaluate(state, seats, students, pairConstraints, positionConstraints, gridHeight);
   return {
-    hardViolations: evalResult.hardCount,
-    softPenalty: evalResult.softPenalty,
-    totalPenalty: evalResult.totalPenalty,
+    hardViolations: evalResult.hardViolations,
+    scoreBreakdown: {
+      hardViolations: evalResult.hardCount,
+      softPenalty: evalResult.softPenalty,
+      totalPenalty: evalResult.totalPenalty,
+    },
   };
+}
+
+export function evaluateStateForDebug(
+  assignments: Assignment[],
+  seats: Seat[],
+  students: Student[],
+  pairConstraints: PairConstraint[],
+  positionConstraints: PositionConstraint[],
+  gridHeight: number,
+): ScoreBreakdown {
+  return evaluateAssignments(assignments, seats, students, pairConstraints, positionConstraints, gridHeight).scoreBreakdown;
 }

@@ -51,6 +51,7 @@ describe('DeskGrid store', () => {
         { id: 's1', name: 'A' },
         { id: 's2', name: 'B' },
       ],
+      pairConstraints: [{ id: 'pair:1', type: 'must_not_next_to', studentAId: 's1', studentBId: 's2', hard: true }],
       assignments: [
         { seatId: 'seat:0,0', studentId: 's1' },
         { seatId: 'seat:1,0', studentId: 's2' },
@@ -64,6 +65,8 @@ describe('DeskGrid store', () => {
 
     expect(bySeat.get('seat:0,0')).toBe('s2');
     expect(bySeat.get('seat:1,0')).toBe('s1');
+    expect(next.hardViolations).toHaveLength(1);
+    expect(next.scoreBreakdown.hardViolations).toBe(1);
   });
 
   it('places unassigned student onto occupied seat and moves displaced student to bench', () => {
@@ -111,7 +114,7 @@ describe('DeskGrid store', () => {
     expect(next.unassignedStudentIds).toContain('s1');
   });
 
-  it('benches all students and resets solver state', () => {
+  it('benches all students and recalculates solver state', () => {
     useDeskGridStore.setState({
       seats: [
         { id: 'seat:0,0', x: 0, y: 0 },
@@ -121,6 +124,8 @@ describe('DeskGrid store', () => {
         { id: 's1', name: 'A' },
         { id: 's2', name: 'B' },
       ],
+      pairConstraints: [{ id: 'pair:1', type: 'must_next_to', studentAId: 's1', studentBId: 's2', hard: true }],
+      positionConstraints: [{ id: 'pos:1', studentId: 's1', type: 'prefer_front', hard: false }],
       assignments: [
         { seatId: 'seat:0,0', studentId: 's1' },
         { seatId: 'seat:1,0', studentId: 's2' },
@@ -134,8 +139,8 @@ describe('DeskGrid store', () => {
     const next = useDeskGridStore.getState();
     expect(next.assignments).toHaveLength(0);
     expect(next.unassignedStudentIds).toEqual(['s1', 's2']);
-    expect(next.hardViolations).toHaveLength(0);
-    expect(next.scoreBreakdown).toEqual({ hardViolations: 0, softPenalty: 0, totalPenalty: 0 });
+    expect(next.hardViolations).toEqual([{ constraintId: 'pair:1', message: 'A and/or B is unassigned.' }]);
+    expect(next.scoreBreakdown).toEqual({ hardViolations: 1, softPenalty: 10, totalPenalty: 100010 });
   });
 
   it('starts a new project by resetting state and clearing local storage', () => {
