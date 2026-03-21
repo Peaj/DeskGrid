@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ConstraintPanel } from './components/ConstraintPanel';
 import { GridCanvas } from './components/GridCanvas';
 import type { GridLayer } from './components/GridCanvas';
+import { MAX_CELL_SIZE } from './components/gridConstants';
 import { LayoutSidebar } from './components/LayoutSidebar';
 import { SolveControls } from './components/SolveControls';
 import { StudentBench } from './components/StudentBench';
@@ -130,14 +131,14 @@ export default function App() {
           </button>
         </div>
 
-        <div className="panel workspace-shell">
+        <div className="panel workspace-shell" style={{ ['--workspace-grid-max-width' as string]: `${grid.width * MAX_CELL_SIZE}px` }}>
           <Toolbar
             ariaLabel={activeLayer === 'layout' ? 'Desk toolbar' : 'Student toolbar'}
             actions={activeLayer === 'layout' ? layoutToolbarActions : studentToolbarActions}
             helperText={toolbarHelperText}
           />
 
-          <main className="relative z-0 mt-3 flex min-h-0 flex-col gap-3 xl:flex-row xl:items-start">
+          <main className="workspace-main relative z-0 mt-3 flex min-h-0 flex-col gap-3 xl:flex-row xl:items-start">
             <div className="flex min-h-0 min-w-0 flex-col gap-3 xl:flex-1">
               <GridCanvas
                 activeLayer={activeLayer}
@@ -167,7 +168,7 @@ export default function App() {
               )}
             </div>
 
-            <aside className="flex h-full min-h-0 flex-col gap-3 xl:w-[min(460px,32vw)] xl:max-w-[460px] xl:shrink-0">
+            <aside className="workspace-sidebar flex h-full min-h-0 flex-col gap-3">
               {activeLayer === 'layout' ? (
                 <LayoutSidebar grid={grid} seats={seats} students={students} />
               ) : (

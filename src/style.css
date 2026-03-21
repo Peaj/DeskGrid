@@ -223,6 +223,7 @@
   }
 
   .workspace-stage {
+    --workspace-sidebar-width: min(460px, 32vw);
     --workspace-top-surface: rgb(236 247 255);
     --workspace-top-tint: rgba(236, 247, 255, 0.98);
     --workspace-top-tint-fade: rgba(224, 242, 254, 0.36);
@@ -250,9 +251,19 @@
     @apply max-w-full;
   }
 
+  .workspace-main {
+    width: 100%;
+  }
+
+  .workspace-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .workspace-shell {
     @apply relative overflow-hidden rounded-lg;
     z-index: 10;
+    width: 100%;
     margin-top: -4px;
     border-color: var(--workspace-tab-border);
     border-top-width: 1px;
@@ -260,6 +271,20 @@
 
   .mode-layout .workspace-shell {
     @apply rounded-tl-none;
+  }
+
+  @media (min-width: 1280px) {
+    .workspace-sidebar {
+      width: var(--workspace-sidebar-width);
+      max-width: var(--workspace-sidebar-width);
+      flex-shrink: 0;
+    }
+  }
+
+  @media (min-width: 1800px) {
+    .workspace-shell {
+      max-width: calc(var(--workspace-grid-max-width, 9999px) + var(--workspace-sidebar-width) + 0.75rem + 1.5rem);
+    }
   }
 
   .workspace-shell::before {
