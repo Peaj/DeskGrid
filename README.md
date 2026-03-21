@@ -4,6 +4,8 @@
 
 DeskGrid is a frontend-only classroom seating planner built with React + TypeScript + Vite.
 
+![DeskGrid preview](docs/preview.png)
+
 ## Deployment
 
 - Production site (GitHub Pages): https://peaj.de/DeskGrid/
