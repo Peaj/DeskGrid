@@ -6,6 +6,18 @@ The format is based on Keep a Changelog, and this project uses Semantic Versioni
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-21
+
+### Added
+
+- A native A4 print workflow with browser print preview, color or black-and-white output, classroom front/back labels, and a print-optimized seating layout that omits rules and connection lines.
+- A print header that brands the page as `DESKGRID` and shows the current app URL for easier classroom handouts and reference copies.
+- A new `Feedback` header menu with direct GitHub issue creation and prefilled email feedback options.
+
+### Fixed
+
+- Solver stats now recalculate automatically whenever the seating plan changes instead of updating only after `Solve Plan`.
+
 ## [0.6.0] - 2026-03-21
 
 ### Added

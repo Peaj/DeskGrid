@@ -8,3 +8,8 @@
 - Keep the `package.json` version and the latest `CHANGELOG.md` release section in sync for every release.
 - Only update `CHANGELOG.md` when explicitly prompted to release.
   - Use Keep a Changelog style headings (Added/Changed/Fixed/Removed).
+  - Classify entries relative to the last released version:
+    - `Added` for features or capabilities shipping for the first time in that release.
+    - `Changed` for updates to behavior or UX that already existed in a prior release.
+    - `Fixed` for bugs/regressions present in a prior release.
+    - Do not place a brand-new feature under `Changed` or `Fixed`.
