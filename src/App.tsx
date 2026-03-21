@@ -7,7 +7,7 @@ import { StudentBench } from './components/StudentBench';
 import { TopBar } from './components/TopBar';
 import { ToastStack } from './components/ToastStack';
 import { Toolbar } from './components/Toolbar';
-import { ImportIcon, LoadIcon, SaveIcon } from './components/icons';
+import { DeskLayerIcon, ImportIcon, LoadIcon, SaveIcon, StudentPortraitIcon } from './components/icons';
 import { useDeskGridStore } from './store/useDeskGridStore';
 
 async function readFileText(file: File): Promise<string> {
@@ -107,7 +107,7 @@ export default function App() {
         onClearLocal={clearProjectLocal}
       />
 
-      <section className="mt-3">
+      <section className={`mt-3 workspace-stage ${activeLayer === 'layout' ? 'mode-layout' : 'mode-student'}`}>
         <div className="layer-tabs" role="tablist" aria-label="Workspace layer tabs">
           <button
             role="tab"
@@ -115,7 +115,8 @@ export default function App() {
             className={`layer-tab layer-tab-layout ${activeLayer === 'layout' ? 'is-active' : ''}`}
             onClick={() => setActiveLayer('layout')}
           >
-            Layout Layer
+            <DeskLayerIcon className="layer-tab-icon" />
+            <span>Desk Layer</span>
           </button>
           <button
             role="tab"
@@ -123,13 +124,14 @@ export default function App() {
             className={`layer-tab layer-tab-student ${activeLayer === 'student' ? 'is-active' : ''}`}
             onClick={() => setActiveLayer('student')}
           >
-            Student Layer
+            <StudentPortraitIcon className="layer-tab-icon" />
+            <span>Student Layer</span>
           </button>
         </div>
 
-        <div className={`panel workspace-shell ${activeLayer === 'layout' ? 'mode-layout' : 'mode-student'}`}>
+        <div className="panel workspace-shell">
           <Toolbar
-            ariaLabel={activeLayer === 'layout' ? 'Layout toolbar' : 'Student toolbar'}
+            ariaLabel={activeLayer === 'layout' ? 'Desk toolbar' : 'Student toolbar'}
             actions={activeLayer === 'layout' ? layoutToolbarActions : studentToolbarActions}
             helperText={toolbarHelperText}
           />
