@@ -157,6 +157,34 @@
     cursor: pointer;
   }
 
+  .app-menu-item:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .app-menu-item:disabled:hover {
+    @apply bg-transparent;
+  }
+
+  .print-menu-panel {
+    @apply w-60 p-2;
+  }
+
+  .print-menu-section {
+    @apply mb-2;
+  }
+
+  .print-menu-label {
+    @apply mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500;
+  }
+
+  .print-tone-options {
+    @apply grid grid-cols-1 gap-1;
+  }
+
+  .print-tone-option.is-active {
+    @apply border border-sky-200 bg-sky-50 text-sky-800;
+  }
+
   .version-pill {
     @apply rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600;
   }
@@ -253,6 +281,121 @@
 
   .workspace-main {
     width: 100%;
+  }
+
+  .app-shell-screen {
+    @apply contents;
+  }
+
+  .print-root {
+    display: none;
+  }
+
+  .print-page {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .print-layout-frame {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    border: 0.45mm solid #94a3b8;
+    border-radius: 3mm;
+    padding: 1.2mm;
+    background: #f8fafc;
+  }
+
+  .print-layout-grid {
+    display: grid;
+    margin: 0 auto;
+  }
+
+  .print-gap,
+  .print-seat {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    border: 0.18mm solid #d7dee7;
+    background: rgba(241, 245, 249, 0.6);
+  }
+
+  .print-seat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.4mm solid #475569;
+    border-radius: 2.2mm;
+    padding: 1.4mm;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .print-orientation-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 8mm;
+    margin-bottom: 3mm;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #475569;
+  }
+
+  .print-front-label {
+    margin-top: 3mm;
+    margin-bottom: 3mm;
+  }
+
+  .print-seat-name {
+    display: -webkit-box;
+    overflow: hidden;
+    color: inherit;
+    font-size: clamp(7pt, 0.85vw, 12pt);
+    font-weight: 700;
+    line-height: 1.15;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .print-tone-color .print-seat {
+    background: linear-gradient(180deg, #f8fbff 0%, #e4eef8 100%);
+    box-shadow: inset 0 0 0 0.25mm rgba(255, 255, 255, 0.72);
+  }
+
+  .print-tone-bw .print-seat {
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .print-tone-bw .print-gap,
+  .print-tone-bw .print-layout-frame {
+    background: #ffffff;
+  }
+
+  .print-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5mm;
+    min-height: 10mm;
+    margin-top: auto;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  .print-footer a {
+    color: inherit;
+    text-decoration: none;
   }
 
   .workspace-sidebar {
@@ -1086,6 +1229,51 @@
 
   .toast-dismiss:focus-visible {
     @apply outline-none ring-2 ring-sky-500/35;
+  }
+
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    html,
+    body {
+      background: #ffffff !important;
+      margin: 0 !important;
+    }
+
+    body::before {
+      display: none !important;
+    }
+
+    .app-root {
+      min-height: auto !important;
+      padding: 0 !important;
+    }
+
+    .app-shell-screen {
+      display: none !important;
+    }
+
+    .print-root {
+      display: flex !important;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 0;
+    }
+
+    .print-page {
+      break-inside: avoid;
+      margin: 0 auto;
+      box-shadow: none !important;
+    }
+
+    .print-tone-color .print-page,
+    .print-tone-color .print-seat {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
   }
 }
 

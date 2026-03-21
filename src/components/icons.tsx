@@ -18,6 +18,7 @@ import {
   MdCreateNewFolder,
   MdFolderOpen,
   MdPerson,
+  MdPrint,
   MdSave,
   MdShuffle,
   MdSwapVert,
@@ -53,3 +54,4 @@ export const MinusIcon = withDefaultClass(MdRemove);
 export const CloseIcon = withDefaultClass(MdClose);
 export const PrivacyIcon = withDefaultClass(MdShield);
 export const DeskLayerIcon = withDefaultClass(MdTableRestaurant);
+export const PrintIcon = withDefaultClass(MdPrint);

@@ -1,11 +1,16 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { LoadIcon, NewProjectIcon, PrivacyIcon, SaveIcon, TrashIcon } from './icons';
+import type { PrintTone } from '../print';
+import { LoadIcon, NewProjectIcon, PrivacyIcon, PrintIcon, SaveIcon, TrashIcon } from './icons';
 
 type MenuAction = () => void | Promise<void>;
 
 interface TopBarProps {
   appVersion: string;
   repoUrl: string;
+  printTone: PrintTone;
+  canPrint: boolean;
+  onPrintToneChange: (tone: PrintTone) => void;
+  onOpenPrintPreview: () => void;
   onNewProject: () => void;
   onSaveProject: () => Promise<void>;
   onLoadProject: () => void;
@@ -15,6 +20,10 @@ interface TopBarProps {
 export function TopBar({
   appVersion,
   repoUrl,
+  printTone,
+  canPrint,
+  onPrintToneChange,
+  onOpenPrintPreview,
   onNewProject,
   onSaveProject,
   onLoadProject,
@@ -22,18 +31,20 @@ export function TopBar({
 }: TopBarProps) {
   const projectMenuRef = useRef<HTMLDetailsElement>(null);
   const privacyMenuRef = useRef<HTMLDetailsElement>(null);
+  const printMenuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
     const closeMenus = (): void => {
       projectMenuRef.current?.removeAttribute('open');
       privacyMenuRef.current?.removeAttribute('open');
+      printMenuRef.current?.removeAttribute('open');
     };
 
     const onPointerDown = (event: PointerEvent): void => {
       const target = event.target as Node | null;
       if (
         target &&
-        [projectMenuRef.current, privacyMenuRef.current].some((menu) => menu?.contains(target))
+        [projectMenuRef.current, privacyMenuRef.current, printMenuRef.current].some((menu) => menu?.contains(target))
       ) {
         return;
       }
@@ -85,6 +96,43 @@ export function TopBar({
           </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          <details className="app-menu" ref={printMenuRef}>
+            <summary className="ui-btn">
+              <PrintIcon />
+              Print
+            </summary>
+            <div className="app-menu-panel print-menu-panel">
+              <div className="print-menu-section">
+                <p className="print-menu-label">Print style</p>
+                <div className="print-tone-options" role="group" aria-label="Print style">
+                  <button
+                    className={`app-menu-item print-tone-option ${printTone === 'color' ? 'is-active' : ''}`}
+                    aria-pressed={printTone === 'color'}
+                    onClick={() => onPrintToneChange('color')}
+                  >
+                    <PrintIcon />
+                    Color
+                  </button>
+                  <button
+                    className={`app-menu-item print-tone-option ${printTone === 'bw' ? 'is-active' : ''}`}
+                    aria-pressed={printTone === 'bw'}
+                    onClick={() => onPrintToneChange('bw')}
+                  >
+                    <PrintIcon />
+                    Black &amp; White
+                  </button>
+                </div>
+              </div>
+              <button
+                className="app-menu-item"
+                disabled={!canPrint}
+                onClick={() => runMenuAction(onOpenPrintPreview, printMenuRef)}
+              >
+                <PrintIcon />
+                Open Print Preview
+              </button>
+            </div>
+          </details>
           <details className="app-menu" ref={privacyMenuRef}>
             <summary className="ui-btn">
               <PrivacyIcon />

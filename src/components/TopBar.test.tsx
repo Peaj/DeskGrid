@@ -12,6 +12,10 @@ describe('TopBar privacy messaging', () => {
       <TopBar
         appVersion="0.4.0"
         repoUrl="https://github.com/Peaj/DeskGrid"
+        printTone="color"
+        canPrint
+        onPrintToneChange={vi.fn()}
+        onOpenPrintPreview={vi.fn()}
         onNewProject={vi.fn()}
         onSaveProject={vi.fn()}
         onLoadProject={vi.fn()}
@@ -50,6 +54,10 @@ describe('TopBar privacy messaging', () => {
       <TopBar
         appVersion="0.4.0"
         repoUrl=""
+        printTone="color"
+        canPrint
+        onPrintToneChange={vi.fn()}
+        onOpenPrintPreview={vi.fn()}
         onNewProject={vi.fn()}
         onSaveProject={onSaveProject}
         onLoadProject={onLoadProject}
@@ -64,5 +72,61 @@ describe('TopBar privacy messaging', () => {
 
     expect(onSaveProject).toHaveBeenCalledTimes(1);
     expect(onLoadProject).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows print controls and routes tone and preview actions', async () => {
+    const user = userEvent.setup();
+    const onPrintToneChange = vi.fn();
+    const onOpenPrintPreview = vi.fn();
+
+    render(
+      <TopBar
+        appVersion="0.4.0"
+        repoUrl=""
+        printTone="color"
+        canPrint
+        onPrintToneChange={onPrintToneChange}
+        onOpenPrintPreview={onOpenPrintPreview}
+        onNewProject={vi.fn()}
+        onSaveProject={vi.fn()}
+        onLoadProject={vi.fn()}
+        onClearLocal={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByText('Print', { selector: 'summary' }));
+
+    expect(screen.getByText('Color')).toBeVisible();
+    expect(screen.getByText('Black & White')).toBeVisible();
+    expect(screen.getByText('Open Print Preview')).toBeVisible();
+
+    await user.click(screen.getByText('Black & White'));
+    await user.click(screen.getByText('Open Print Preview'));
+
+    expect(onPrintToneChange).toHaveBeenCalledWith('bw');
+    expect(onOpenPrintPreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables print preview when there are no seats to print', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TopBar
+        appVersion="0.4.0"
+        repoUrl=""
+        printTone="color"
+        canPrint={false}
+        onPrintToneChange={vi.fn()}
+        onOpenPrintPreview={vi.fn()}
+        onNewProject={vi.fn()}
+        onSaveProject={vi.fn()}
+        onLoadProject={vi.fn()}
+        onClearLocal={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByText('Print', { selector: 'summary' }));
+
+    expect(screen.getByText('Open Print Preview')).toBeDisabled();
   });
 });
