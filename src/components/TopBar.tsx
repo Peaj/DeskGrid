@@ -129,7 +129,10 @@ export function TopBar({
             </div>
           </details>
           <details className="app-menu" ref={projectMenuRef}>
-            <summary className="ui-btn">Project</summary>
+            <summary className="ui-btn">
+              <NewProjectIcon />
+              Project
+            </summary>
             <div className="app-menu-panel">
               <button className="app-menu-item" onClick={() => runMenuAction(onNewProject, projectMenuRef)}>
                 <NewProjectIcon />
