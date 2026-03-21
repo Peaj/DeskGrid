@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ConstraintPanel } from './components/ConstraintPanel';
 import { GridCanvas } from './components/GridCanvas';
 import type { GridLayer } from './components/GridCanvas';
+import { LayoutSidebar } from './components/LayoutSidebar';
 import { SolveControls } from './components/SolveControls';
 import { StudentBench } from './components/StudentBench';
 import { TopBar } from './components/TopBar';
@@ -136,12 +137,8 @@ export default function App() {
             helperText={toolbarHelperText}
           />
 
-          <main
-            className={`relative z-0 mt-3 grid min-h-0 grid-cols-1 gap-3 ${
-              activeLayer === 'student' ? 'xl:grid-cols-[minmax(0,1fr)_minmax(360px,460px)]' : ''
-            }`}
-          >
-            <div className="flex min-h-0 flex-col gap-3">
+          <main className="relative z-0 mt-3 flex min-h-0 flex-col gap-3 xl:flex-row xl:items-start">
+            <div className="flex min-h-0 min-w-0 flex-col gap-3 xl:flex-1">
               <GridCanvas
                 activeLayer={activeLayer}
                 grid={grid}
@@ -170,8 +167,11 @@ export default function App() {
               )}
             </div>
 
-            {activeLayer === 'student' && (
-              <aside className="flex h-full min-h-0 flex-col gap-3">
+            <aside className="flex h-full min-h-0 flex-col gap-3 xl:w-[min(460px,32vw)] xl:max-w-[460px] xl:shrink-0">
+              {activeLayer === 'layout' ? (
+                <LayoutSidebar grid={grid} seats={seats} students={students} />
+              ) : (
+                <>
                 <SolveControls scoreBreakdown={scoreBreakdown} onRandomAssign={randomAssign} onBenchAllStudents={benchAllStudents} onSolve={solve} />
                 <ConstraintPanel
                   grid={grid}
@@ -185,8 +185,9 @@ export default function App() {
                   hoveredConstraintId={hoveredConstraintId}
                   onHoveredConstraintChange={setHoveredConstraintId}
                 />
-              </aside>
-            )}
+                </>
+              )}
+            </aside>
           </main>
         </div>
       </section>
